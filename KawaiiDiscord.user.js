@@ -98,11 +98,11 @@
                         skipped++;
                     }
                 });
-                console.log("KawaiiDiscord:", "Twitch global emotes loaded:", loaded, "skipped:", skipped);
+                console.info("KawaiiDiscord:", "Twitch global emotes loaded:", loaded, "skipped:", skipped);
                 callbacks.success(self);
             },
             error: function (xhr, textStatus, errorThrown) {
-                console.log("KawaiiDiscord:", "Twitch global emotes failed to load:", textStatus, "error:", errorThrown);
+                console.warn("KawaiiDiscord:", "Twitch global emotes failed to load:", textStatus, "error:", errorThrown);
                 callbacks.error(self);
             }
         });
@@ -136,11 +136,11 @@
                         skipped++;
                     }
                 });
-                console.log("KawaiiDiscord:", "Twitch subscriber emotes loaded:", loaded, "skipped:", skipped);
+                console.info("KawaiiDiscord:", "Twitch subscriber emotes loaded:", loaded, "skipped:", skipped);
                 callbacks.success(self);
             },
             error: function (xhr, textStatus, errorThrown) {
-                console.log("KawaiiDiscord:", "Twitch subscriber emotes failed to load:", textStatus, "error:", errorThrown);
+                console.warn("KawaiiDiscord:", "Twitch subscriber emotes failed to load:", textStatus, "error:", errorThrown);
                 callbacks.error(self);
             }
         });
@@ -173,11 +173,11 @@
                 }
                 // RIP mikeroll
                 self.emoteMap.set(":mike#:", self.emoteMap.get(":mikeroll:"));
-                console.log("KawaiiDiscord:", "SFMLab emotes loaded:", loaded, "skipped:", skipped);
+                console.info("KawaiiDiscord:", "SFMLab emotes loaded:", loaded, "skipped:", skipped);
                 callbacks.success(self);
             },
             error: function (xhr, textStatus, errorThrown) {
-                console.log("KawaiiDiscord:", "Twitch subscriber emotes failed to load:", textStatus, "error:", errorThrown);
+                console.warn("KawaiiDiscord:", "Twitch subscriber emotes failed to load:", textStatus, "error:", errorThrown);
                 callbacks.error(self);
             }
         });
