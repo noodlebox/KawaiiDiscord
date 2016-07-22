@@ -189,17 +189,17 @@
     // Get or set the scroll distance from the bottom of an element
     // Usage identical to scrollTop()
     $.fn.scrollBottom = function (val) {
-        var elem = this.get(0);
+        var elem = this[0];
         if (val === undefined) {
             if (elem === undefined) {
                 return undefined;
             }
-            return this.get(0).scrollHeight - (this.scrollTop() + this.height());
+            return elem.scrollHeight - (this.scrollTop() + this.height());
         }
         if (elem === undefined) {
             return this;
         }
-        return this.scrollTop(this.get(0).scrollHeight - (val + this.height()));
+        return this.scrollTop(elem.scrollHeight - (val + this.height()));
     };
 
     // Get the set of text nodes contained within a set of elements
@@ -227,8 +227,7 @@
         // Build a list of new emotes
         var emotes = $();
 
-        emoteSets = $.extend([], emoteSets);
-        if (emoteSets.length === 0) {
+        if (emoteSets === undefined || emoteSets.length === 0) {
             return emotes;
         }
 
@@ -257,8 +256,7 @@
         // Build a list of new emotes
         var emotes = $();
 
-        emoteSets = $.extend([], emoteSets);
-        if (emoteSets.length === 0) {
+        if (emoteSets === undefined || emoteSets.length === 0) {
             return emotes;
         }
 
@@ -314,8 +312,7 @@
 
     // Parse emotes (of any style) in message text, returning the new emotes
     $.fn.parseEmotes = function (emoteSets) {
-        emoteSets = $.extend([], emoteSets);
-        if (emoteSets.length === 0) {
+        if (emoteSets === undefined || emoteSets.length === 0) {
             return $();
         }
 
@@ -360,26 +357,27 @@
 
     // Helper function for finding all elements matching selector affected by a mutation
     var mutationFind = function (mutation, selector) {
-        var mutated = $(mutation.target).add(mutation.addedNodes).filter(selector);
-        var descendants = $(mutation.addedNodes).find(selector);
-        var ancestors = $(mutation.target).closest(selector);
+        var target = $(mutation.target), addedNodes = $(mutation.addedNodes);
+        var mutated = target.add(addedNodes).filter(selector);
+        var descendants = addedNodes.find(selector);
+        var ancestors = target.parents(selector);
         return mutated.add(descendants).add(ancestors);
     };
 
     // Watch for new chat messages
     var chat_observer = new MutationObserver(function (mutations, observer) {
         // Figure out whether we're scrolled to the bottom
-        var messagesContainer = $(".messages").first();
+        var messagesContainer = $(".messages");
         var atBottom = messagesContainer.scrollBottom() < 0.5;
 
         mutations.forEach(function (mutation) {
             // Get the set of messages affected by this mutation
-            var messages = mutationFind(mutation, ".markup:not(:has(.message-content)), .message-content");
+            var messages = mutationFind(mutation, ".markup, .message-content").not(":has(.message-content)");
             // When a line is edited, Discord may stuff the new contents inside one of our emotes
             messages.find(".kawaii-parseemotes").contents().unwrap();
             // Process messages
             messages.parseEmotes([sfmlabEmotes, twitchEmotes]).fancyTooltip();
-            mutationFind(mutation, ".image:has(canvas)").autoGif();
+            messages.find(".image").autoGif();
         });
 
         // Ensure we're still scrolled to the bottom if necessary
@@ -389,7 +387,7 @@
     });
 
     var parseEmoteSet = function (set) {
-        var messages = $(".markup:not(:has(.message-content)), .message-content");
+        var messages = $(".markup, .message-content").not(":has(.message-content)");
         messages.parseEmotes([set]).fancyTooltip();
     };
 
