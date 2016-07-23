@@ -7,6 +7,7 @@
 // @author       noodlebox
 // @require      https://code.jquery.com/jquery-3.1.0.min.js
 // @match        *://discordapp.com/channels/*
+// @match        *://discordapp.com/invite/*
 // @run-at       document-idle
 // @grant        none
 // ==/UserScript==
