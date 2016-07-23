@@ -377,7 +377,7 @@
             messages.find(".kawaii-parseemotes").contents().unwrap();
             // Process messages
             messages.parseEmotes([sfmlabEmotes, twitchEmotes]).fancyTooltip();
-            messages.find(".image").autoGif();
+            mutationFind(mutation, ".image").autoGif();
         });
 
         // Ensure we're still scrolled to the bottom if necessary
