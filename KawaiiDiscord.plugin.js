@@ -57,7 +57,7 @@ var kawaii = function () {};
             error: $.noop,
         }, callbacks);
         if (this.loaded) {
-            callbacks.success(self);
+            callbacks.success(this);
             return;
         }
         var self = this;
@@ -100,7 +100,7 @@ var kawaii = function () {};
             error: $.noop,
         }, callbacks);
         if (this.loaded) {
-            callbacks.success(self);
+            callbacks.success(this);
             return;
         }
         var self = this;
@@ -143,7 +143,7 @@ var kawaii = function () {};
             error: $.noop,
         }, callbacks);
         if (this.loaded) {
-            callbacks.success(self);
+            callbacks.success(this);
             return;
         }
         var self = this;
