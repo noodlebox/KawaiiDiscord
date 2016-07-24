@@ -365,6 +365,14 @@
         return mutated.add(descendants).add(ancestors);
     };
 
+    // Helper function for finding all elements matching selector removed by a mutation
+    var mutationFindRemoved = function (mutation, selector) {
+        var removedNodes = $(mutation.removedNodes);
+        var mutated = removedNodes.filter(selector);
+        var descendants = removedNodes.find(selector);
+        return mutated.add(descendants);
+    };
+
     // Watch for new chat messages
     var chat_observer = new MutationObserver(function (mutations, observer) {
         // Figure out whether we're scrolled to the bottom
@@ -379,6 +387,9 @@
             // Process messages
             messages.parseEmotes([sfmlabEmotes, twitchEmotes]).fancyTooltip();
             mutationFind(mutation, ".image").autoGif();
+
+            // Clean up any remaining tooltips
+            mutationFindRemoved(mutation, ".kawaii-fancytooltip").trigger("mouseout.fancyTooltip");
         });
 
         // Ensure we're still scrolled to the bottom if necessary
