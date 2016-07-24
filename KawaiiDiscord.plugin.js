@@ -32,7 +32,11 @@ var kawaii = function () {};
             if (table === undefined) {
                 return undefined;
             }
-            emoteName = table[(seed || 0) % table.length];
+            if (seed === undefined || seed === 0) {
+                emoteName = this.rollDefault;
+            } else {
+                emoteName = table[seed % table.length];
+            }
         }
         var path = this.emoteMap.get(emoteName);
         if (path === undefined) {
@@ -151,6 +155,7 @@ var kawaii = function () {};
     sfmlabEmotes.urlStart = "https://sfmlab.com/static/emoji/img/";
     sfmlabEmotes.caseSensitive = false;
     sfmlabEmotes.rolls = true;
+    sfmlabEmotes.rollDefault = "mikeroll";
     sfmlabEmotes.emoteStyle = EmoteSet.emoteStyle.STANDARD;
     sfmlabEmotes.load = function (callbacks) {
         callbacks = $.extend({
@@ -176,8 +181,8 @@ var kawaii = function () {};
                     self.emoteMap.set(fixName, fixUrl);
                     loaded++;
                     // Build roll tables
-                    for (var i = 0; i <= fixName.length; i++) {
-                        var prefix = name.slice(0, i);
+                    var prefix = /^(.*\D)?\d*$/.exec(fixName)[1];
+                    if (prefix !== undefined) {
                         var table = self.rollTables.get(prefix);
                         if (table === undefined) {
                             table = [];
@@ -266,9 +271,13 @@ var kawaii = function () {};
                 }
                 var seed = 0;
                 if (res[1].endsWith("#")) {
-                    // Get a seed for rolls
-                    seed = getMessageSeed($(this).closest(".message").get(0));
-                    console.debug("seed:", seed, res[1]);
+                    var message = $(this).closest(".message").not(".message-sending");
+                    // Don't look up the useless id for messages being sent
+                    if (message.length !== 0) {
+                        // Get a seed for rolls
+                        seed = getMessageSeed(message[0]);
+                        console.debug("seed:", seed, res[1]);
+                    }
                 }
 
                 var emote;
@@ -481,7 +490,7 @@ var kawaii = function () {};
     };
 
     kawaii.prototype.getVersion = function () {
-        return "0.5.0";
+        return "0.5.1";
     };
 
     kawaii.prototype.getAuthor = function () {
