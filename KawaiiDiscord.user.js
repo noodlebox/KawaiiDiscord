@@ -54,7 +54,11 @@
             if (table === undefined) {
                 return undefined;
             }
-            emoteName = table[(seed || 0) % table.length];
+            if (seed === undefined || seed === 0) {
+                emoteName = this.rollDefault;
+            } else {
+                emoteName = table[seed % table.length];
+            }
         }
         var path = this.emoteMap.get(emoteName);
         if (path === undefined) {
@@ -166,6 +170,7 @@
     sfmlabEmotes.urlStart = "https://sfmlab.com/static/emoji/img/";
     sfmlabEmotes.caseSensitive = false;
     sfmlabEmotes.rolls = true;
+    sfmlabEmotes.rollDefault = "mikeroll";
     sfmlabEmotes.emoteStyle = EmoteSet.emoteStyle.STANDARD;
     sfmlabEmotes.load = function (callbacks) {
         callbacks = $.extend({
@@ -287,9 +292,13 @@
             }
             var seed = 0;
             if (res[1].endsWith("#")) {
-                // Get a seed for rolls
-                seed = getMessageSeed($(this).closest(".message").get(0));
-                console.debug("seed:", seed, res[1]);
+                var message = $(this).closest(".message").not(".message-sending");
+                // Don't look up the useless id for messages being sent
+                if (message.length !== 0) {
+                    // Get a seed for rolls
+                    seed = getMessageSeed(message[0]);
+                    console.debug("seed:", seed, res[1]);
+                }
             }
 
             var emote;
