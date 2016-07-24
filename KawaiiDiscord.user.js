@@ -192,8 +192,8 @@
                     self.emoteMap.set(fixName, fixUrl);
                     loaded++;
                     // Build roll tables
-                    for (var i = 0; i <= fixName.length; i++) {
-                        var prefix = name.slice(0, i);
+                    var prefix = /^(.*\D)?\d*$/.exec(fixName)[1];
+                    if (prefix !== undefined) {
                         var table = self.rollTables.get(prefix);
                         if (table === undefined) {
                             table = [];
