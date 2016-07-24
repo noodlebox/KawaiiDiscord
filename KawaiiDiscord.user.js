@@ -2,7 +2,7 @@
 // @name         KawaiiDiscord
 // @namespace    https://files.noodlebox.moe/
 // @downloadURL  https://files.noodlebox.moe/userscripts/KawaiiDiscord.user.js
-// @version      0.4.2
+// @version      0.4.2.2
 // @description  Break SFMLab Chat (now for Discord!)
 // @author       noodlebox
 // @require      https://code.jquery.com/jquery-3.1.0.min.js
@@ -31,9 +31,11 @@
     // Emote data
     var EmoteSet = function () {
         this.emoteMap = new Map();
+        this.rollTables = new Map();
         this.urlStart = "";
         this.urlEnd = "";
         this.caseSensitive = true;
+        this.rolls = false;
         this.emoteStyle = EmoteSet.emoteStyle.STANDARD;
     };
     // emoteStyle enum
@@ -42,9 +44,17 @@
         TWITCH: 1, // Composed of "word characters" (\w)
     };
     EmoteSet.prototype.load = $.noop;
-    EmoteSet.prototype.getUrl = function (emoteName) {
+    EmoteSet.prototype.getUrl = function (emoteName, seed) {
         if (!this.caseSensitive) {
             emoteName = emoteName.toLowerCase();
+        }
+        if (this.rolls && emoteName.endsWith("#")) {
+            var prefix = emoteName.slice(0, -1);
+            var table = this.rollTables.get(prefix);
+            if (table === undefined) {
+                return undefined;
+            }
+            emoteName = table[(seed || 0) % table.length];
         }
         var path = this.emoteMap.get(emoteName);
         if (path === undefined) {
@@ -53,11 +63,15 @@
         return this.urlStart + path + this.urlEnd;
     };
     // Create and return an emote element, or undefined if no match found
-    EmoteSet.prototype.createEmote = function (emoteName) {
-        var emoteURL = this.getUrl(emoteName);
+    EmoteSet.prototype.createEmote = function (emoteName, seed) {
+        var emoteURL = this.getUrl(emoteName, seed);
         if (emoteURL === undefined) {
             return undefined;
         }
+        if (this.emoteStyle === EmoteSet.emoteStyle.STANDARD) {
+            emoteName = ":"+emoteName+":";
+        }
+        // TODO: Apply special style to rolled emotes
         var emote = $("<img>", {
             src: emoteURL,
             draggable: "false",
@@ -147,10 +161,11 @@
         });
     };
 
-    // SFMLab emotes, with :mike#: aliased to :mikeroll:
+    // SFMLab emotes, now with more rolling than ever!
     var sfmlabEmotes = new EmoteSet();
     sfmlabEmotes.urlStart = "https://sfmlab.com/static/emoji/img/";
     sfmlabEmotes.caseSensitive = false;
+    sfmlabEmotes.rolls = true;
     sfmlabEmotes.emoteStyle = EmoteSet.emoteStyle.STANDARD;
     sfmlabEmotes.load = function (callbacks) {
         callbacks = $.extend({
@@ -167,13 +182,23 @@
                 var loaded = 0;
                 var skipped = 0;
                 for (var name in data) {
-                    var fixName = ":" + name.toLowerCase() + ":";
+                    var fixName = name.toLowerCase();
                     var fixUrl = /[^/]*$/.exec(data[name])[0];
                     self.emoteMap.set(fixName, fixUrl);
                     loaded++;
+                    // Build roll tables
+                    for (var i = 0; i <= fixName.length; i++) {
+                        var prefix = name.slice(0, i);
+                        var table = self.rollTables.get(prefix);
+                        if (table === undefined) {
+                            table = [];
+                            self.rollTables.set(prefix, table);
+                        }
+                        table.push(fixName);
+                    }
                 }
-                // RIP mikeroll
-                self.emoteMap.set(":mike#:", self.emoteMap.get(":mikeroll:"));
+                // Original data may come in unsorted, so sort here to ensure consistency
+                self.rollTables.forEach(function(v) {v.sort();});
                 console.info("KawaiiDiscord:", "SFMLab emotes loaded:", loaded, "skipped:", skipped);
                 callbacks.success(self);
             },
@@ -184,6 +209,26 @@
         });
     };
 
+    // This is super hackish, and will likely break as Discord's internal API changes
+    // Anything using this or what it returns should be prepared to catch some exceptions
+    function getInternalProps(e) {
+        var reactInternal = e[Object.keys(e).filter(function(k) {return k && k.startsWith("__reactInternalInstance");})];
+        return reactInternal._currentElement._owner._instance.props;
+    }
+
+    // Get a consistent, but unpredictable index from the message snowflake ID
+    // See: https://github.com/twitter/snowflake/tree/snowflake-2010#solution
+    function getMessageSeed(e) {
+        try {
+            // Shift (roughly) 22 bits (10^3 ~ 2^10)
+            // All numbers in JS are 64-bit floats, so this is necessary to avoid a huge loss of precision
+            return Number(getInternalProps(e).message.id.slice(0, -6)) >>> 2;
+        } catch (err) {
+            // Something (not surprisingly) broke, but this isn't critical enough to completely bail over
+            console.error("getMessageSeed:", e, err);
+            return 0;
+        }
+    }
 
     // jQuery Plugins
 
@@ -235,9 +280,21 @@
         // Find and replace :emote:-style emotes
         // Takes advantage of Discord's parsing of "potential" emotes
         this.find("span").not(".edited, .highlight").textNodes().each(function () {
+            var res = /^:([^:]*):$/.exec(this.data);
+            if (res === null) {
+                // Somehow didn't match, but this generally shouldn't happen
+                return;
+            }
+            var seed = 0;
+            if (res[1].endsWith("#")) {
+                // Get a seed for rolls
+                seed = getMessageSeed($(this).closest(".message").get(0));
+                console.debug("seed:", seed, res[1]);
+            }
+
             var emote;
             for (var set of emoteSets) {
-                emote = set.createEmote(this.data);
+                emote = set.createEmote(res[1], seed);
                 if (emote !== undefined) {
                     break;
                 }
