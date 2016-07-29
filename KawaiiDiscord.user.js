@@ -89,7 +89,15 @@
         return emote;
     };
 
-    // Global Twitch emotes (emoteset 0), excluding those using non-word characters
+    // Filter function for "Twitch-style" emotes, to avoid collisions with common words
+    // Check if at least 3 word characters, and has at least one capital letter
+    // Based on current FFZ naming requirements (older FFZ emotes may not satisfy these requirements)
+    // See: https://www.frankerfacez.com/emoticons/submit
+    function emoteFilter(name) {
+        return (/^\w{3,}$/.test(name) && /[A-Z]/.test(name));
+    }
+
+    // Global Twitch emotes (emoteset 0), filtered by emoteFilter
     var twitchEmotes = new EmoteSet();
     twitchEmotes.urlStart = "https://static-cdn.jtvnw.net/emoticons/v1/";
     twitchEmotes.urlEnd = "/1.0";
@@ -110,7 +118,7 @@
                 var loaded = 0;
                 var skipped = 0;
                 data.emoticon_sets[0].forEach(function (emoticon) {
-                    if (/^\w+$/.test(emoticon.code)) {
+                    if (emoteFilter(emoticon.code)) {
                         self.emoteMap.set(emoticon.code, emoticon.id);
                         loaded++;
                     } else {
@@ -127,7 +135,7 @@
         });
     };
 
-    // Twitch subscriber emotes, excluding those using non-word characters
+    // Twitch subscriber emotes, filtered by emoteFilter
     var twitchSubEmotes = new EmoteSet();
     twitchSubEmotes.urlStart = "https://static-cdn.jtvnw.net/emoticons/v1/";
     twitchSubEmotes.urlEnd = "/1.0";
@@ -148,7 +156,7 @@
                 var loaded = 0;
                 var skipped = 0;
                 data.emoticons.forEach(function (emoticon) {
-                    if (emoticon.emoticon_set !== 0 && /^\w+$/.test(emoticon.code)) {
+                    if (emoticon.emoticon_set !== 0 && emoteFilter(emoticon.code)) {
                         self.emoteMap.set(emoticon.code, emoticon.id);
                         loaded++;
                     } else {
@@ -209,6 +217,58 @@
             },
             error: function (xhr, textStatus, errorThrown) {
                 console.warn("KawaiiDiscord:", "Twitch subscriber emotes failed to load:", textStatus, "error:", errorThrown);
+                callbacks.error(self);
+            }
+        });
+    };
+
+    // FFZ public emotes, filtered by emoteFilter
+    var ffzEmotes = new EmoteSet();
+    ffzEmotes.urlStart = "https://cdn.frankerfacez.com/emoticon/";
+    ffzEmotes.urlEnd = "/1";
+    ffzEmotes.emoteStyle = EmoteSet.emoteStyle.TWITCH;
+    ffzEmotes.load = function (callbacks) {
+        callbacks = $.extend({
+            success: $.noop,
+            error: $.noop,
+        }, callbacks);
+        var loaded = 0;
+        var skipped = 0;
+        var self = this;
+        // See: https://www.frankerfacez.com/developers
+        $.ajax("https://api.frankerfacez.com/v1/emoticons?per_page=200&page=1", {
+            dataType: "json",
+            jsonp: false,
+            cache: true,
+            success: function success(data) {
+                data.emoticons.forEach(function (emoticon) {
+                    if (emoteFilter(emoticon.name)) {
+                        self.emoteMap.set(emoticon.name, emoticon.id);
+                        loaded++;
+                    } else {
+                        skipped++;
+                    }
+                });
+                var next = data._links.next;
+                if (next !== undefined) {
+                    console.debug("KawaiiDiscord:", "FFZ emotes partially loaded:", loaded, "skipped:", skipped);
+                    $.ajax(next, {
+                        dataType: "json",
+                        jsonp: false,
+                        cache: true,
+                        success: success,
+                        error: function (xhr, textStatus, errorThrown) {
+                            console.warn("KawaiiDiscord:", "FFZ emotes failed to load:", textStatus, "error:", errorThrown);
+                            callbacks.error(self);
+                        }
+                    });
+                } else {
+                    console.info("KawaiiDiscord:", "FFZ emotes loaded:", loaded, "skipped:", skipped);
+                    callbacks.success(self);
+                }
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                console.warn("KawaiiDiscord:", "FFZ emotes failed to load:", textStatus, "error:", errorThrown);
                 callbacks.error(self);
             }
         });
@@ -451,7 +511,7 @@
             // When a line is edited, Discord may stuff the new contents inside one of our emotes
             messages.find(".kawaii-parseemotes").contents().unwrap();
             // Process messages
-            messages.parseEmotes([sfmlabEmotes, twitchEmotes]).fancyTooltip();
+            messages.parseEmotes([sfmlabEmotes, twitchEmotes, twitchSubEmotes, ffzEmotes]).fancyTooltip();
             mutationFind(mutation, ".image").autoGif();
 
             // Clean up any remaining tooltips
@@ -471,6 +531,7 @@
 
     twitchEmotes.load({success: parseEmoteSet});
     //twitchSubEmotes.load({success: parseEmoteSet});
+    //ffzEmotes.load({success: parseEmoteSet});
     sfmlabEmotes.load({success: parseEmoteSet});
 
     chat_observer.observe(document, { childList:true, subtree:true });
