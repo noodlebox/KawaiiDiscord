@@ -200,18 +200,17 @@
             error: $.noop,
         }, callbacks);
         var self = this;
-        // FIXME: https://sfmlab.com/emoji_json/ needs header: Access-Control-Allow-Origin: *
-        $.ajax("https://files.noodlebox.moe/emoji.json", {
+        $.ajax("https://sfmlab.com/emoji_json/", {
             dataType: "json",
             jsonp: false,
             cache: true,
             success: function (data) {
                 var loaded = 0;
                 var skipped = 0;
-                for (var name in data) {
-                    var fixName = name.toLowerCase();
-                    var fixUrl = /[^/]*$/.exec(data[name])[0];
-                    self.emoteMap.set(fixName, fixUrl);
+                self.template = data.template;
+                data.emotes.forEach(function (emote) {
+                    var fixName = emote.name.toLowerCase();
+                    self.emoteMap.set(fixName, emote.url);
                     loaded++;
                     // Build roll tables
                     var prefix = /^(.*\D)?\d*$/.exec(fixName)[1];
@@ -223,7 +222,7 @@
                         }
                         table.push(fixName);
                     }
-                }
+                });
                 // Original data may come in unsorted, so sort here to ensure consistency
                 self.rollTables.forEach(function(v) {v.sort();});
                 console.info("KawaiiDiscord:", "SFMLab emotes loaded:", loaded, "skipped:", skipped);
