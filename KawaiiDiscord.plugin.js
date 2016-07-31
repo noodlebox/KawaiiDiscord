@@ -9,8 +9,7 @@ var kawaii = function () {};
     function EmoteSet() {
         this.emoteMap = new Map();
         this.rollTables = new Map();
-        this.urlStart = "";
-        this.urlEnd = "";
+        this.template = "";
         this.caseSensitive = true;
         this.rolls = false;
         this.emoteStyle = EmoteSet.emoteStyle.STANDARD;
@@ -20,6 +19,11 @@ var kawaii = function () {};
     EmoteSet.emoteStyle = {
         STANDARD: 0, // Surrounded by ":"
         TWITCH: 1, // Composed of "word characters" (\w)
+    };
+    // template field names enum
+    EmoteSet.templateField = {
+        PATH: 0, // The unique path component for this emote name
+        SIZE: 1, // emote size, usually a single digit between 1 and 4
     };
     EmoteSet.prototype.load = function(){};
     EmoteSet.prototype.getUrl = function (emoteName, seed) {
@@ -42,7 +46,19 @@ var kawaii = function () {};
         if (path === undefined) {
             return undefined;
         }
-        return this.urlStart + path + this.urlEnd;
+        return this.template.replace(/{(\d+)}/g, function (match, field) {
+            switch (Number(field)) {
+                case EmoteSet.templateField.PATH:
+                    return path;
+                    break;
+                case EmoteSet.templateField.SIZE:
+                    return "1";
+                    break;
+                default:
+                    return match;
+                    break;
+            }
+        });
     };
     // Create and return an emote element, or undefined if no match found
     EmoteSet.prototype.createEmote = function (emoteName, seed) {
@@ -66,8 +82,7 @@ var kawaii = function () {};
 
     // Global Twitch emotes (emoteset 0), excluding those using non-word characters
     var twitchEmotes = new EmoteSet();
-    twitchEmotes.urlStart = "https://static-cdn.jtvnw.net/emoticons/v1/";
-    twitchEmotes.urlEnd = "/1.0";
+    twitchEmotes.template = "https://static-cdn.jtvnw.net/emoticons/v1/{0}/{1}.0";
     twitchEmotes.emoteStyle = EmoteSet.emoteStyle.TWITCH;
     twitchEmotes.load = function (callbacks) {
         callbacks = $.extend({
@@ -109,8 +124,7 @@ var kawaii = function () {};
 
     // Twitch subscriber emotes, excluding those using non-word characters
     var twitchSubEmotes = new EmoteSet();
-    twitchSubEmotes.urlStart = "https://static-cdn.jtvnw.net/emoticons/v1/";
-    twitchSubEmotes.urlEnd = "/1.0";
+    twitchSubEmotes.template = "https://static-cdn.jtvnw.net/emoticons/v1/{0}/{1}.0";
     twitchSubEmotes.emoteStyle = EmoteSet.emoteStyle.TWITCH;
     twitchSubEmotes.load = function (callbacks) {
         callbacks = $.extend({
@@ -152,7 +166,7 @@ var kawaii = function () {};
 
     // SFMLab emotes, now with more rolling than ever!
     var sfmlabEmotes = new EmoteSet();
-    sfmlabEmotes.urlStart = "https://sfmlab.com/static/emoji/img/";
+    sfmlabEmotes.template = "https://sfmlab.com/static/emoji/img/{0}";
     sfmlabEmotes.caseSensitive = false;
     sfmlabEmotes.rolls = true;
     sfmlabEmotes.rollDefault = "mikeroll";

@@ -32,8 +32,7 @@
     var EmoteSet = function () {
         this.emoteMap = new Map();
         this.rollTables = new Map();
-        this.urlStart = "";
-        this.urlEnd = "";
+        this.template = "";
         this.caseSensitive = true;
         this.rolls = false;
         this.emoteStyle = EmoteSet.emoteStyle.STANDARD;
@@ -42,6 +41,11 @@
     EmoteSet.emoteStyle = {
         STANDARD: 0, // Surrounded by ":"
         TWITCH: 1, // Composed of "word characters" (\w)
+    };
+    // template field names enum
+    EmoteSet.templateField = {
+        PATH: 0, // The unique path component for this emote name
+        SIZE: 1, // emote size, usually a single digit between 1 and 4
     };
     EmoteSet.prototype.load = $.noop;
     EmoteSet.prototype.getUrl = function (emoteName, seed) {
@@ -64,7 +68,19 @@
         if (path === undefined) {
             return undefined;
         }
-        return this.urlStart + path + this.urlEnd;
+        return this.template.replace(/{(\d+)}/g, function (match, field) {
+            switch (Number(field)) {
+                case EmoteSet.templateField.PATH:
+                    return path;
+                    break;
+                case EmoteSet.templateField.SIZE:
+                    return "1";
+                    break;
+                default:
+                    return match;
+                    break;
+            }
+        });
     };
     // Create and return an emote element, or undefined if no match found
     EmoteSet.prototype.createEmote = function (emoteName, seed) {
@@ -99,8 +115,7 @@
 
     // Global Twitch emotes (emoteset 0), filtered by emoteFilter
     var twitchEmotes = new EmoteSet();
-    twitchEmotes.urlStart = "https://static-cdn.jtvnw.net/emoticons/v1/";
-    twitchEmotes.urlEnd = "/1.0";
+    twitchEmotes.template = "https://static-cdn.jtvnw.net/emoticons/v1/{0}/{1}.0";
     twitchEmotes.emoteStyle = EmoteSet.emoteStyle.TWITCH;
     twitchEmotes.load = function (callbacks) {
         callbacks = $.extend({
@@ -137,8 +152,7 @@
 
     // Twitch subscriber emotes, filtered by emoteFilter
     var twitchSubEmotes = new EmoteSet();
-    twitchSubEmotes.urlStart = "https://static-cdn.jtvnw.net/emoticons/v1/";
-    twitchSubEmotes.urlEnd = "/1.0";
+    twitchSubEmotes.template = "https://static-cdn.jtvnw.net/emoticons/v1/{0}/{1}.0";
     twitchSubEmotes.emoteStyle = EmoteSet.emoteStyle.TWITCH;
     twitchSubEmotes.load = function (callbacks) {
         callbacks = $.extend({
@@ -175,7 +189,7 @@
 
     // SFMLab emotes, now with more rolling than ever!
     var sfmlabEmotes = new EmoteSet();
-    sfmlabEmotes.urlStart = "https://sfmlab.com/static/emoji/img/";
+    sfmlabEmotes.template = "https://sfmlab.com/static/emoji/img/{0}";
     sfmlabEmotes.caseSensitive = false;
     sfmlabEmotes.rolls = true;
     sfmlabEmotes.rollDefault = "mikeroll";
@@ -224,8 +238,7 @@
 
     // FFZ public emotes, filtered by emoteFilter
     var ffzEmotes = new EmoteSet();
-    ffzEmotes.urlStart = "https://cdn.frankerfacez.com/emoticon/";
-    ffzEmotes.urlEnd = "/1";
+    ffzEmotes.template = "https://cdn.frankerfacez.com/emoticon/{0}/{1}";
     ffzEmotes.emoteStyle = EmoteSet.emoteStyle.TWITCH;
     ffzEmotes.load = function (callbacks) {
         callbacks = $.extend({
