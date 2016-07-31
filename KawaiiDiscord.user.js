@@ -2,7 +2,7 @@
 // @name         KawaiiDiscord
 // @namespace    https://files.noodlebox.moe/
 // @downloadURL  https://files.noodlebox.moe/userscripts/KawaiiDiscord.user.js
-// @version      0.5.1
+// @version      0.6.0
 // @description  Break SFMLab Chat (now for Discord!)
 // @author       noodlebox
 // @require      https://code.jquery.com/jquery-3.1.0.min.js
