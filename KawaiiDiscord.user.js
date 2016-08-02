@@ -72,13 +72,10 @@
             switch (Number(field)) {
                 case EmoteSet.templateField.PATH:
                     return path;
-                    break;
                 case EmoteSet.templateField.SIZE:
                     return "1";
-                    break;
                 default:
                     return match;
-                    break;
             }
         });
     };
@@ -98,7 +95,8 @@
             alt: emoteName,
             title: emoteName,
             style: "width: auto;", // Some emojis (Twitch) are not square
-        }).addClass("emoji jumboable kawaii-parseemotes");
+            class: "emoji jumboable kawaii-parseemotes",
+        });
         if (__ICantLiveWithoutGiantEmotes__) {
             emote.attr("style", "height: 64px; width: 64px;");
         }
@@ -347,11 +345,8 @@
 
     // Parse for standard emotes in message text, returning the new emotes
     $.fn.parseEmotesStandard = function (emoteSets) {
-        // Build a list of new emotes
-        var emotes = $();
-
         if (emoteSets === undefined || emoteSets.length === 0) {
-            return emotes;
+            return this;
         }
 
         // Find and replace :emote:-style emotes
@@ -383,25 +378,21 @@
             if (emote !== undefined) {
                 // Swap in the emote element
                 $(this).replaceWith(emote);
-                emotes = emotes.add(emote);
             }
         });
-
-        return emotes;
+        return this;
     };
 
     // Parse for Twitch-style emotes in message text, returning the new emotes
     $.fn.parseEmotesTwitch = function (emoteSets) {
-        // Build a list of new emotes
-        var emotes = $();
-
         if (emoteSets === undefined || emoteSets.length === 0) {
-            return emotes;
+            return this;
         }
 
         // Find and replace Twitch-style emotes
         // This requires picking apart text nodes more carefully
         this.add(this.find(":not(span, code)")).textNodes().each(function () {
+            var sub = [];
             // separate out potential emotes
             // all twitch emotes (that we care about) are composed of characters in [a-zA-Z0-9_], i.e. \w
             // use a regex with a capture group, so that we can preserve separators
@@ -425,13 +416,12 @@
                     // Create a new text node from any previous text
                     var text = nonEmote.join("");
                     if (text.length > 0) {
-                        $(this).before(document.createTextNode(text));
+                        sub.push(document.createTextNode(text));
                     }
                     // Clear out stored words
                     nonEmote = [];
                     // Add the emote element
-                    $(this).before(emote);
-                    emotes = emotes.add(emote);
+                    sub.push(emote);
                 } else {
                     // Unrecognized as emote, keep the word
                     nonEmote.push(words[i]);
@@ -444,9 +434,10 @@
                 // Replace this node's contents with remaining text
                 this.data = nonEmote.join("");
             }
+            $(this).before(sub);
         });
 
-        return emotes;
+        return this;
     };
 
     // Parse emotes (of any style) in message text, returning the new emotes
@@ -465,7 +456,7 @@
             }
         }
 
-        return this.parseEmotesStandard(standardSets).add(this.parseEmotesTwitch(twitchSets));
+        return this.parseEmotesStandard(standardSets).parseEmotesTwitch(twitchSets);
     };
 
     // Replace title text with fancy tooltips
@@ -523,7 +514,7 @@
             // When a line is edited, Discord may stuff the new contents inside one of our emotes
             messages.find(".kawaii-parseemotes").contents().unwrap();
             // Process messages
-            messages.parseEmotes([sfmlabEmotes, twitchEmotes, twitchSubEmotes, ffzEmotes]).fancyTooltip();
+            messages.parseEmotes([sfmlabEmotes, twitchEmotes, twitchSubEmotes, ffzEmotes]).find(".kawaii-parseemotes").fancyTooltip();
             mutationFind(mutation, ".image").autoGif();
 
             // Clean up any remaining tooltips

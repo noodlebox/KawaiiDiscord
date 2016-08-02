@@ -50,13 +50,10 @@ var kawaii = function () {};
             switch (Number(field)) {
                 case EmoteSet.templateField.PATH:
                     return path;
-                    break;
                 case EmoteSet.templateField.SIZE:
                     return "1";
-                    break;
                 default:
                     return match;
-                    break;
             }
         });
     };
@@ -76,7 +73,8 @@ var kawaii = function () {};
             alt: emoteName,
             title: emoteName,
             style: "width: auto;", // Some emojis are not square (disrupts notification list though)
-        }).addClass("emoji jumboable kawaii-parseemotes");
+            class: "emoji jumboable kawaii-parseemotes",
+        });
         return emote;
     };
 
@@ -267,11 +265,8 @@ var kawaii = function () {};
 
         // Parse for standard emotes in message text, returning the new emotes
         $.fn.parseEmotesStandard = function (emoteSets) {
-            // Build a list of new emotes
-            var emotes = $();
-
             if (emoteSets === undefined || emoteSets.length === 0) {
-                return emotes;
+                return this;
             }
 
             // Find and replace :emote:-style emotes
@@ -303,25 +298,22 @@ var kawaii = function () {};
                 if (emote !== undefined) {
                     // Swap in the emote element
                     $(this).replaceWith(emote);
-                    emotes = emotes.add(emote);
                 }
             });
 
-            return emotes;
+            return this;
         };
 
         // Parse for Twitch-style emotes in message text, returning the new emotes
         $.fn.parseEmotesTwitch = function (emoteSets) {
-            // Build a list of new emotes
-            var emotes = $();
-
             if (emoteSets === undefined || emoteSets.length === 0) {
-                return emotes;
+                return this;
             }
 
             // Find and replace Twitch-style emotes
             // This requires picking apart text nodes more carefully
             this.add(this.find(":not(span, code)")).textNodes().each(function () {
+                var sub = [];
                 // separate out potential emotes
                 // all twitch emotes (that we care about) are composed of characters in [a-zA-Z0-9_], i.e. \w
                 // use a regex with a capture group, so that we can preserve separators
@@ -345,13 +337,12 @@ var kawaii = function () {};
                         // Create a new text node from any previous text
                         var text = nonEmote.join("");
                         if (text.length > 0) {
-                            $(this).before(document.createTextNode(text));
+                            sub.push(document.createTextNode(text));
                         }
                         // Clear out stored words
                         nonEmote = [];
                         // Add the emote element
-                        $(this).before(emote);
-                        emotes = emotes.add(emote);
+                        sub.push(emote);
                     } else {
                         // Unrecognized as emote, keep the word
                         nonEmote.push(words[i]);
@@ -364,9 +355,10 @@ var kawaii = function () {};
                     // Replace this node's contents with remaining text
                     this.data = nonEmote.join("");
                 }
+                $(this).before(sub);
             });
 
-            return emotes;
+            return this;
         };
 
         // Parse emotes (of any style) in message text, returning the new emotes
@@ -385,7 +377,7 @@ var kawaii = function () {};
                 }
             }
 
-            return this.parseEmotesStandard(standardSets).add(this.parseEmotesTwitch(twitchSets));
+            return this.parseEmotesStandard(standardSets).parseEmotesTwitch(twitchSets);
         };
 
         // Replace title text with fancy tooltips
@@ -465,7 +457,7 @@ var kawaii = function () {};
         // When a line is edited, Discord may stuff the new contents inside one of our emotes
         messages.find(".kawaii-parseemotes").contents().unwrap();
         // Process messages
-        messages.parseEmotes([sfmlabEmotes, twitchEmotes]).fancyTooltip();
+        messages.parseEmotes([sfmlabEmotes, twitchEmotes, twitchSubEmotes]).find(".kawaii-parseemotes").fancyTooltip();
 
         // Clean up any remaining tooltips
         mutationFindRemoved(e, ".kawaii-fancytooltip").trigger("mouseout.fancyTooltip");
