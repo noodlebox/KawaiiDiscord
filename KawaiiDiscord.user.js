@@ -562,9 +562,8 @@
     // See: https://github.com/twitter/snowflake/tree/snowflake-2010#solution
     function getMessageSeed(e) {
         try {
-            // Shift (roughly) 22 bits (10^3 ~ 2^10)
-            // All numbers in JS are 64-bit floats, so this is necessary to avoid a huge loss of precision
-            return Number(getInternalProps(e).message.id.slice(0, -6)) >>> 2;
+            // Shift right 22 bits to get timestamp (divide to avoid conversion to 32-bit int)
+            return Number(getInternalProps(e).message.id) / (1<<22);
         } catch (err) {
             // Something (not surprisingly) broke, but this isn't critical enough to completely bail over
             console.error("getMessageSeed:", e, err);
