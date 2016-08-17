@@ -22,9 +22,3 @@ Although BetterDiscord already supports Twitch emotes, this plugin parses them m
 - Loads emote lists at startup
 - Auto-play GIFs, without needing to hover *(userscript only)*
 - Fancy Discord-style tooltips for emotes
-
-## TODO
-- Periodically re-check for new emotes while running
-- Settings panel (for managing emote sets, other preferences)
-- Add emotes to emoji picker
-- Custom theme support
