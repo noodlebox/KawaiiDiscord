@@ -328,19 +328,37 @@
         return this.contents().filter(function () { return this.nodeType === Node.TEXT_NODE; });
     };
 
-    // Replace GIF previews with actual image
+    // Automatically play GIFs and "GIFV" Videos
     $.fn.autoGif = function () {
-        return this.filter(".image:has(canvas)").each(function () {
-            var canvas = $(this).children("canvas").first();
+        // Handle GIF
+        this.find(".image:has(canvas)").each(function () {
+            var image = $(this);
+            var canvas = image.children("canvas").first();
+            // Replace GIF preview with actual image
             var src = canvas.attr("src");
             if(src !== undefined) {
-                $(this).replaceWith($("<img>", {
+                image.replaceWith($("<img>", {
                     src: canvas.attr("src"),
                     width: canvas.attr("width"),
                     height: canvas.attr("height"),
                 }).addClass("image kawaii-autogif"));
             }
         });
+
+        // Handle GIFV
+        this.find(".embed-thumbnail-gifv:has(video)").each(function () {
+            var embed = $(this);
+            var video = embed.children("video").first();
+            // Remove the class, embed-thumbnail-gifv, to avoid the "GIF" overlay
+            embed.removeClass("embed-thumbnail-gifv").addClass("kawaii-autogif");
+            // Prevent the default behavior of pausing the video
+            embed.parent().on("mouseout.autoGif", function (event) {
+                event.stopPropagation();
+            });
+            video[0].play();
+        });
+
+        return this;
     };
 
     // Parse for standard emotes in message text, returning the new emotes
@@ -514,7 +532,7 @@
             messages.find(".kawaii-parseemotes").contents().unwrap();
             // Process messages
             messages.parseEmotes([sfmlabEmotes, twitchEmotes, twitchSubEmotes, ffzEmotes]).find(".kawaii-parseemotes").fancyTooltip();
-            mutationFind(mutation, ".image").autoGif();
+            mutationFind(mutation, ".accessory").autoGif();
 
             // Clean up any remaining tooltips
             mutationFindRemoved(mutation, ".kawaii-fancytooltip").trigger("mouseout.fancyTooltip");
