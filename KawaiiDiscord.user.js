@@ -364,7 +364,6 @@
                 if (message.length !== 0) {
                     // Get a seed for rolls
                     seed = getMessageSeed(message[0]);
-                    console.debug("seed:", seed, res[1]);
                 }
             }
 
