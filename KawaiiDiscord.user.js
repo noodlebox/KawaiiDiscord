@@ -367,36 +367,66 @@
             return this;
         }
 
-        // Find and replace :emote:-style emotes
-        // Takes advantage of Discord's parsing of "potential" emotes
-        this.find("span").not(".edited, .highlight").textNodes().each(function () {
-            var res = /^:([^:]*):$/.exec(this.data);
-            if (res === null) {
-                // Somehow didn't match, but this generally shouldn't happen
-                return;
-            }
+        this.add(this.find(":not(span, code)")).textNodes().each(function () {
+            var sub = [];
+            // separate out potential emotes
+            // all standard emotes are composed of characters in [a-zA-Z0-9_], i.e. \w between two colons, :
+            // use a regex with a capture group, so that we can preserve separators
+            var words = this.data.split(/(:[\w#*]+:)/g);
+            // non-emoteable words, for building a new text node if necessary
+            var nonEmote = [];
+            // whether the text in this node has been modified
+            var modified = false;
+
             var seed = 0;
-            if (res[1].endsWith("#")) {
-                var message = $(this).closest(".message").not(".message-sending");
-                // Don't look up the useless id for messages being sent
-                if (message.length !== 0) {
-                    // Get a seed for rolls
-                    seed = getMessageSeed(message[0]);
-                }
+            var message = $(this).closest(".message").not(".message-sending");
+            // Don't look up the useless id for messages being sent
+            if (message.length !== 0) {
+                // Get a seed for rolls
+                seed = getMessageSeed(message[0]);
             }
 
-            var emote;
-            for (var set of emoteSets) {
-                emote = set.createEmote(res[1], seed);
-                if (emote !== undefined) {
+            for (var i = 0; i < words.length; i += 2) {
+                // words[i] is a separator
+                // words[i+1] is our potential emote, or undefined
+
+                // Keep the separator
+                nonEmote.push(words[i]);
+                if (words[i+1] === undefined) {
                     break;
                 }
+
+                var emote;
+                for (var set of emoteSets) {
+                    emote = set.createEmote(/^:([^:]+):$/.exec(words[i+1])[1], seed);
+                    if (emote !== undefined) {
+                        break;
+                    }
+                }
+                if (emote !== undefined) {
+                    modified = true;
+                    // Create a new text node from any previous text
+                    var text = nonEmote.join("");
+                    if (text.length > 0) {
+                        sub.push(document.createTextNode(text));
+                    }
+                    // Clear out stored words
+                    nonEmote = [];
+                    // Add the emote element
+                    sub.push(emote);
+                } else {
+                    // Unrecognized as emote, keep the word
+                    nonEmote.push(words[i+1]);
+                }
             }
-            if (emote !== undefined) {
-                // Swap in the emote element
-                $(this).replaceWith(emote);
+            // If no emotes were found, leave this text node unchanged
+            if (modified) {
+                // Replace this node's contents with remaining text
+                this.data = nonEmote.join("");
             }
+            $(this).before(sub);
         });
+
         return this;
     };
 
