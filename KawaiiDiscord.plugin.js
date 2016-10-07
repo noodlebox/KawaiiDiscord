@@ -525,7 +525,7 @@ var kawaii = function () {};
     };
 
     kawaii.prototype.getVersion = function () {
-        return "0.7.1";
+        return "0.7.2";
     };
 
     kawaii.prototype.getAuthor = function () {
