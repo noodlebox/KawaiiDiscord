@@ -95,6 +95,7 @@ var kawaii = function () {};
         // See: https://github.com/justintv/Twitch-API/blob/master/v3_resources/chat.md#get-chatemoticons
         $.ajax("https://api.twitch.tv/kraken/chat/emoticon_images?emotesets=0", {
             accepts: {json: "application/vnd.twitchtv.v3+json"},
+            headers: {'Client-ID': 'a7pwjx1l6tr0ygjrzafhznzd4zgg9md'},
             dataType: "json",
             jsonp: false,
             cache: true,
@@ -137,6 +138,7 @@ var kawaii = function () {};
         // See: https://github.com/justintv/Twitch-API/blob/master/v3_resources/chat.md#get-chatemoticons
         $.ajax("https://api.twitch.tv/kraken/chat/emoticon_images", {
             accepts: {json: "application/vnd.twitchtv.v3+json"},
+            headers: {'Client-ID': 'a7pwjx1l6tr0ygjrzafhznzd4zgg9md'},
             dataType: "json",
             jsonp: false,
             cache: true,
