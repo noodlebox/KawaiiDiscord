@@ -72,7 +72,7 @@ var kawaii = function () {};
             draggable: "false",
             alt: emoteName,
             title: emoteName,
-            class: "emoji jumboable kawaii-parseemotes",
+            class: "emoji kawaii-parseemotes",
         });
         return emote;
     };
@@ -410,7 +410,23 @@ var kawaii = function () {};
                 }
             }
 
-            return this.parseEmotesStandard(standardSets).parseEmotesTwitch(twitchSets);
+            // Process messages for emote replacements
+            this.parseEmotesStandard(standardSets).parseEmotesTwitch(twitchSets);
+
+            // Properly jumboify emotes/emoji in messages with no other text
+            this.has(".emoji").each(function () {
+                // Get the "edited" text, if any, regardless of how it's styled or localized
+                var edited = $(this).find(".edited").text();
+                // Get the remaining message text
+                var text = this.textContent.replace(edited, "").trim();
+                if (text.length === 0) {
+                    $(this).find(".emoji").addClass("jumboable");
+                } else {
+                    $(this).find(".emoji").removeClass("jumboable");
+                }
+            });
+
+            return this;
         };
 
         // Replace title text with fancy tooltips
