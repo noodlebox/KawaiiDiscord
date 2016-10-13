@@ -219,8 +219,12 @@ var kawaii = function () {};
     // This is super hackish, and will likely break as Discord's internal API changes
     // Anything using this or what it returns should be prepared to catch some exceptions
     function getInternalProps(e) {
-        var reactInternal = e[Object.keys(e).filter(function(k) {return k && k.startsWith("__reactInternalInstance");})];
-        return reactInternal._currentElement._owner._instance.props;
+        try {
+            var reactInternal = e[Object.keys(e).filter(k => k.startsWith("__reactInternalInstance"))[0]];
+            return reactInternal._currentElement._owner._instance.props;
+        } catch (err) {
+            return undefined;
+        }
     }
 
     // Get a consistent, but unpredictable index from the message snowflake ID
@@ -264,7 +268,7 @@ var kawaii = function () {};
             return this.contents().filter(function () { return this.nodeType === Node.TEXT_NODE; });
         };
 
-        // Parse for standard emotes in message text, returning the new emotes
+        // Parse for standard emotes in message text
         $.fn.parseEmotesStandard = function (emoteSets) {
             if (emoteSets === undefined || emoteSets.length === 0) {
                 return this;
@@ -333,7 +337,7 @@ var kawaii = function () {};
             return this;
         };
 
-        // Parse for Twitch-style emotes in message text, returning the new emotes
+        // Parse for Twitch-style emotes in message text
         $.fn.parseEmotesTwitch = function (emoteSets) {
             if (emoteSets === undefined || emoteSets.length === 0) {
                 return this;
@@ -390,10 +394,10 @@ var kawaii = function () {};
             return this;
         };
 
-        // Parse emotes (of any style) in message text, returning the new emotes
+        // Parse emotes (of any style) in message text
         $.fn.parseEmotes = function (emoteSets) {
             if (emoteSets === undefined || emoteSets.length === 0) {
-                return $();
+                return this;
             }
 
             var standardSets = [];
