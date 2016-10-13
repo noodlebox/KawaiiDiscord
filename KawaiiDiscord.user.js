@@ -15,19 +15,6 @@
 (function ($) {
     "use strict";
 
-    // Set this to true for giant emotes.
-    var __ICantLiveWithoutGiantEmotes__ = false;
-    // But, editing the script isn't the best way to do this.
-    // Create a CSS rule in your theme like this instead:
-    //
-    // .emoji.jumboable {
-    //     height: 64px;
-    //     width: 64px;
-    // }
-    //
-    // Or, just wait for a settings panel to be added.
-
-
     // Emote data
     var EmoteSet = function () {
         this.emoteMap = new Map();
@@ -94,12 +81,8 @@
             draggable: "false",
             alt: emoteName,
             title: emoteName,
-            style: "width: auto;", // Some emojis (Twitch) are not square
             class: "emoji jumboable kawaii-parseemotes",
         });
-        if (__ICantLiveWithoutGiantEmotes__) {
-            emote.attr("style", "height: 64px; width: 64px;");
-        }
         return emote;
     };
 

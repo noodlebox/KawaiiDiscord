@@ -72,7 +72,6 @@ var kawaii = function () {};
             draggable: "false",
             alt: emoteName,
             title: emoteName,
-            style: "width: auto;", // Some emojis are not square (disrupts notification list though)
             class: "emoji jumboable kawaii-parseemotes",
         });
         return emote;
