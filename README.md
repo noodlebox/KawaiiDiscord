@@ -20,5 +20,4 @@ Although BetterDiscord already supports Twitch emotes, this plugin parses them m
 - Twitch emotes
 - Support for "mikeroll" style emotes, e.g. :mike#: randomly selects from [:mike:, :mike2:, ..., :mike124:]
 - Loads emote lists at startup
-- Auto-play GIFs and GIFVs, without needing to hover *(userscript only)*
 - Fancy Discord-style tooltips for emotes
