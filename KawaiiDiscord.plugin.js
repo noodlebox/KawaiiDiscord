@@ -274,7 +274,7 @@ var kawaii = function () {};
                 return this;
             }
 
-            this.add(this.find(":not(span, code)")).textNodes().each(function () {
+            this.add(this.find(":not(.edited, code, code *)")).textNodes().each(function () {
                 var sub = [];
                 // separate out potential emotes
                 // all standard emotes are composed of characters in [a-zA-Z0-9_], i.e. \w between two colons, :
@@ -345,7 +345,7 @@ var kawaii = function () {};
 
             // Find and replace Twitch-style emotes
             // This requires picking apart text nodes more carefully
-            this.add(this.find(":not(span, code)")).textNodes().each(function () {
+            this.add(this.find(":not(.edited, code, code *)")).textNodes().each(function () {
                 var sub = [];
                 // separate out potential emotes
                 // all twitch emotes (that we care about) are composed of characters in [a-zA-Z0-9_], i.e. \w
