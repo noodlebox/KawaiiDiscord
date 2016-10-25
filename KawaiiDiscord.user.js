@@ -594,3 +594,5 @@
     // For console debugging
     window.jq = $;
 })(jQuery.noConflict(true));
+
+// vim: et:ts=4:sw=4:sts=4

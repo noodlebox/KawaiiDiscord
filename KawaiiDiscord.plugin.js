@@ -551,3 +551,5 @@ var kawaii = function () {};
         return "noodlebox";
     };
 })();
+
+// vim: et:ts=4:sw=4:sts=4
