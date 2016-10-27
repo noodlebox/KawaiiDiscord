@@ -8,6 +8,8 @@
 // @require      https://code.jquery.com/jquery-3.1.1.min.js
 // @match        *://discordapp.com/channels/*
 // @match        *://discordapp.com/invite/*
+// @match        *://canary.discordapp.com/channels/*
+// @match        *://canary.discordapp.com/invite/*
 // @run-at       document-idle
 // @grant        none
 // ==/UserScript==
