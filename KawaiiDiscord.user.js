@@ -397,10 +397,7 @@
                 if (emote !== undefined) {
                     modified = true;
                     // Create a new text node from any previous text
-                    var text = nonEmote.join("");
-                    if (text.length > 0) {
-                        sub.push(document.createTextNode(text));
-                    }
+                    sub.push(document.createTextNode(nonEmote.join("")));
                     // Clear out stored words
                     nonEmote = [];
                     // Add the emote element
@@ -452,10 +449,7 @@
                 if (emote !== undefined) {
                     modified = true;
                     // Create a new text node from any previous text
-                    var text = nonEmote.join("");
-                    if (text.length > 0) {
-                        sub.push(document.createTextNode(text));
-                    }
+                    sub.push(document.createTextNode(nonEmote.join("")));
                     // Clear out stored words
                     nonEmote = [];
                     // Add the emote element
@@ -565,8 +559,6 @@
         mutations.forEach(function (mutation) {
             // Get the set of messages affected by this mutation
             var messages = mutationFind(mutation, ".markup, .message-content").not(":has(.message-content)");
-            // When a line is edited, Discord may stuff the new contents inside one of our emotes
-            messages.find(".kawaii-parseemotes").contents().unwrap();
             // Process messages
             messages.parseEmotes([sfmlabEmotes, twitchEmotes, twitchSubEmotes, ffzEmotes]).find(".kawaii-parseemotes").fancyTooltip();
             mutationFind(mutation, ".accessory").autoGif();
