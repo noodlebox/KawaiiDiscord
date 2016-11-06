@@ -495,12 +495,13 @@
     // Attach observer to start triggering mutations
     function startObserver(observer) {
         // Get main app area and popouts
-        for (let target of document.querySelectorAll([
-                ".theme-dark",
-                ".theme-light",
-                ".theme-dark+span",
-                ".theme-light+span",
-        ].join(","))) {
+        const selector = [
+            ".theme-dark",
+            ".theme-light",
+            ".theme-dark+span",
+            ".theme-light+span",
+        ].join(",");
+        for (let target of document.querySelectorAll(selector)) {
             observer.observe(target, { childList:true, subtree:true });
         }
     }
@@ -510,51 +511,64 @@
         observer.disconnect();
     }
 
-    // Watch for new chat messages
-    var chat_observer = new MutationObserver(function (mutations, observer) {
+    function processMutation(mutation, observer) {
+        // Get the set of messages and/or topic area affected by this mutation
+        const selector = [
+            ".markup",
+            ".message-content",
+            ".topic-expandable",
+            ".markdown-modal.selectable",
+        ].join(",");
+        const messages = mutationFind(mutation, selector)
+            .not(":has(.message-content)");
+
         // Ignore changes made here
         stopObserver(observer);
+
         // Figure out whether we're scrolled to the bottom
-        var messagesContainer = $(".messages");
-        var atBottom = messagesContainer.scrollBottom() < 0.5;
+        const messagesContainer = $(".messages");
+        const atBottom = messagesContainer.scrollBottom() < 0.5;
 
-        mutations.forEach(function (mutation) {
-            // Get the set of messages and/or topic area affected by this mutation
-            var messages = mutationFind(mutation, [
-                    ".markup",
-                    ".message-content",
-                    ".topic-expandable",
-                    ".markdown-modal.selectable",
-            ].join(",")).not(":has(.message-content)");
-            // Process messages
-            messages.parseEmotes([sfmlabEmotes, twitchEmotes, twitchSubEmotes]).find(".kawaii-parseemotes").fancyTooltip();
+        // Process messages
+        messages.parseEmotes([sfmlabEmotes, twitchEmotes, twitchSubEmotes])
+            .find(".kawaii-parseemotes").fancyTooltip();
 
-            // Clean up any remaining tooltips
-            mutationFindRemoved(mutation, ".kawaii-fancytooltip").trigger("mouseout.fancyTooltip");
-        });
+        // Clean up any remaining tooltips
+        mutationFindRemoved(mutation, ".kawaii-fancytooltip")
+            .trigger("mouseout.fancyTooltip");
 
         // Ensure we're still scrolled to the bottom if necessary
         if (atBottom) {
             messagesContainer.scrollBottom(0);
         }
+
         // Resume observer
         startObserver(observer);
+    }
+
+    // Watch for new chat messages
+    const chat_observer = new MutationObserver(function (mutations, observer) {
+        // Aggregate mutations
+        const totalMutation = {
+            target: [],
+            addedNodes: [],
+            removedNodes: [],
+        };
+        for (let mutation of mutations) {
+            totalMutation.target.push(mutation.target);
+            for (let node of mutation.addedNodes) {
+                totalMutation.addedNodes.push(node);
+            }
+            for (let node of mutation.removedNodes) {
+                totalMutation.removedNodes.push(node);
+            }
+        }
+
+        processMutation(totalMutation, observer);
     });
 
-    function parseEmoteSet(set) {
-        // Ignore changes made here
-        stopObserver(chat_observer);
-        // Get the set of all messages and topic area
-        var messages = $([
-                    ".markup",
-                    ".message-content",
-                    ".topic-expandable",
-                    ".markdown-modal.selectable",
-            ].join(",")).not(":has(.message-content)");
-        // Process messages
-        messages.parseEmotes([set]).find(".kawaii-parseemotes").fancyTooltip();
-        // Resume observer
-        startObserver(chat_observer);
+    function parseEmoteSet() {
+        processMutation({addedNodes: [document]}, chat_observer);
     }
 
     twitchEmotes.load({success: parseEmoteSet});
