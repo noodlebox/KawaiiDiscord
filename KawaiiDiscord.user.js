@@ -220,57 +220,6 @@
         });
     };
 
-    // FFZ public emotes, filtered by emoteFilter
-    var ffzEmotes = new EmoteSet();
-    ffzEmotes.template = "https://cdn.frankerfacez.com/emoticon/{0}/{1}";
-    ffzEmotes.emoteStyle = EmoteSet.emoteStyle.TWITCH;
-    ffzEmotes.load = function (callbacks) {
-        callbacks = $.extend({
-            success: $.noop,
-            error: $.noop,
-        }, callbacks);
-        var loaded = 0;
-        var skipped = 0;
-        var self = this;
-        // See: https://www.frankerfacez.com/developers
-        $.ajax("https://api.frankerfacez.com/v1/emoticons?per_page=200&page=1", {
-            dataType: "json",
-            jsonp: false,
-            cache: true,
-            success: function success(data) {
-                data.emoticons.forEach(function (emoticon) {
-                    if (emoteFilter(emoticon.name)) {
-                        self.emoteMap.set(emoticon.name, emoticon.id);
-                        loaded++;
-                    } else {
-                        skipped++;
-                    }
-                });
-                var next = data._links.next;
-                if (next !== undefined) {
-                    console.debug("KawaiiDiscord:", "FFZ emotes partially loaded:", loaded, "skipped:", skipped);
-                    $.ajax(next, {
-                        dataType: "json",
-                        jsonp: false,
-                        cache: true,
-                        success: success,
-                        error: function (xhr, textStatus, errorThrown) {
-                            console.warn("KawaiiDiscord:", "FFZ emotes failed to load:", textStatus, "error:", errorThrown);
-                            callbacks.error(self);
-                        }
-                    });
-                } else {
-                    console.info("KawaiiDiscord:", "FFZ emotes loaded:", loaded, "skipped:", skipped);
-                    callbacks.success(self);
-                }
-            },
-            error: function (xhr, textStatus, errorThrown) {
-                console.warn("KawaiiDiscord:", "FFZ emotes failed to load:", textStatus, "error:", errorThrown);
-                callbacks.error(self);
-            }
-        });
-    };
-
     // This is super hackish, and will likely break as Discord's internal API changes
     // Anything using this or what it returns should be prepared to catch some exceptions
     function getInternalProps(e) {
@@ -585,7 +534,7 @@
                     ".markdown-modal.selectable",
             ].join(",")).not(":has(.message-content)");
             // Process messages
-            messages.parseEmotes([sfmlabEmotes, twitchEmotes, twitchSubEmotes, ffzEmotes]).find(".kawaii-parseemotes").fancyTooltip();
+            messages.parseEmotes([sfmlabEmotes, twitchEmotes, twitchSubEmotes]).find(".kawaii-parseemotes").fancyTooltip();
             mutationFind(mutation, ".accessory").autoGif();
 
             // Clean up any remaining tooltips
@@ -618,13 +567,9 @@
 
     twitchEmotes.load({success: parseEmoteSet});
     //twitchSubEmotes.load({success: parseEmoteSet});
-    //ffzEmotes.load({success: parseEmoteSet});
     sfmlabEmotes.load({success: parseEmoteSet});
 
     startObserver(chat_observer);
-
-    // For console debugging
-    window.jq = $;
 })(jQuery.noConflict(true));
 
 // vim: et:ts=4:sw=4:sts=4
