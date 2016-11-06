@@ -552,7 +552,13 @@
 
     // Attach observer to start triggering mutations
     function startObserver(observer) {
-        observer.observe(document, { childList:true, subtree:true });
+        // Get main app area and popouts
+        for (let target of document.querySelectorAll([
+                ".theme-dark",
+                ".theme-light",
+        ].join(","))) {
+            observer.observe(target, { childList:true, subtree:true });
+        }
     }
 
     // Detach observer to stop triggering mutations
