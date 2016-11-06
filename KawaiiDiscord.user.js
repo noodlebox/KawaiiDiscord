@@ -492,7 +492,7 @@
         this.parseEmotesStandard(standardSets).parseEmotesTwitch(twitchSets);
 
         // Properly jumboify emotes/emoji in messages with no other text
-        this.has(".emoji").each(function () {
+        this.not(".topic-expandable").has(".emoji").each(function () {
             // Get the "edited" text, if any, regardless of how it's styled or localized
             var edited = $(this).find(".edited").text();
             // Get the remaining message text
@@ -556,6 +556,8 @@
         for (let target of document.querySelectorAll([
                 ".theme-dark",
                 ".theme-light",
+                ".theme-dark+span",
+                ".theme-light+span",
         ].join(","))) {
             observer.observe(target, { childList:true, subtree:true });
         }
@@ -575,8 +577,13 @@
         var atBottom = messagesContainer.scrollBottom() < 0.5;
 
         mutations.forEach(function (mutation) {
-            // Get the set of messages affected by this mutation
-            var messages = mutationFind(mutation, ".markup, .message-content").not(":has(.message-content)");
+            // Get the set of messages and/or topic area affected by this mutation
+            var messages = mutationFind(mutation, [
+                    ".markup",
+                    ".message-content",
+                    ".topic-expandable",
+                    ".markdown-modal.selectable",
+            ].join(",")).not(":has(.message-content)");
             // Process messages
             messages.parseEmotes([sfmlabEmotes, twitchEmotes, twitchSubEmotes, ffzEmotes]).find(".kawaii-parseemotes").fancyTooltip();
             mutationFind(mutation, ".accessory").autoGif();
@@ -596,8 +603,13 @@
     function parseEmoteSet(set) {
         // Ignore changes made here
         stopObserver(chat_observer);
-        // Get the set of all messages
-        var messages = $(".markup, .message-content").not(":has(.message-content)");
+        // Get the set of all messages and topic area
+        var messages = $([
+                    ".markup",
+                    ".message-content",
+                    ".topic-expandable",
+                    ".markdown-modal.selectable",
+            ].join(",")).not(":has(.message-content)");
         // Process messages
         messages.parseEmotes([set]).find(".kawaii-parseemotes").fancyTooltip();
         // Resume observer
