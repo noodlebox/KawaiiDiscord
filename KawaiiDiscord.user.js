@@ -265,8 +265,34 @@
 
     // Get the set of text nodes contained within a set of elements
     $.fn.textNodes = function () {
-        return this.contents().filter(function () { return this.nodeType === Node.TEXT_NODE; });
+        return this.map(function () {
+            const textNodes = [];
+            let textNodeWalker, currentNode;
+
+            if ($(this).find("code").length > 0) {
+                // If there are any code blocks, rejecting that whole subtree is a bit faster
+                textNodeWalker = document.createTreeWalker(this, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {
+                    acceptNode: function (node) {
+                        if (node.nodeType === Node.TEXT_NODE) {
+                            return NodeFilter.FILTER_ACCEPT;
+                        }
+                        if (node.nodeName.toLowerCase() === "code") {
+                            return NodeFilter.FILTER_REJECT;
+                        }
+                        return NodeFilter.FILTER_SKIP;
+                    }
+                });
+            } else {
+                textNodeWalker = document.createTreeWalker(this, NodeFilter.SHOW_TEXT);
+            }
+
+            while ((currentNode = textNodeWalker.nextNode()) !== null) {
+                textNodes.push(currentNode);
+            }
+            return textNodes;
+        });
     };
+
 
     // Parse for standard emotes in message text
     $.fn.parseEmotesStandard = function (emoteSets) {
@@ -274,7 +300,7 @@
             return this;
         }
 
-        this.add(this.find(":not(.edited, code, code *)")).textNodes().each(function () {
+        this.textNodes().each(function () {
             var sub = [];
             // separate out potential emotes
             // all standard emotes are composed of characters in [a-zA-Z0-9_], i.e. \w between two colons, :
@@ -342,7 +368,7 @@
 
         // Find and replace Twitch-style emotes
         // This requires picking apart text nodes more carefully
-        this.add(this.find(":not(.edited, code, code *)")).textNodes().each(function () {
+        this.textNodes().each(function () {
             var sub = [];
             // separate out potential emotes
             // all twitch emotes (that we care about) are composed of characters in [a-zA-Z0-9_], i.e. \w
