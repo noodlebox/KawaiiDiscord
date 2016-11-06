@@ -550,8 +550,20 @@
         return mutated.add(descendants);
     }
 
+    // Attach observer to start triggering mutations
+    function startObserver(observer) {
+        observer.observe(document, { childList:true, subtree:true });
+    }
+
+    // Detach observer to stop triggering mutations
+    function stopObserver(observer) {
+        observer.disconnect();
+    }
+
     // Watch for new chat messages
     var chat_observer = new MutationObserver(function (mutations, observer) {
+        // Ignore changes made here
+        stopObserver(observer);
         // Figure out whether we're scrolled to the bottom
         var messagesContainer = $(".messages");
         var atBottom = messagesContainer.scrollBottom() < 0.5;
@@ -571,11 +583,19 @@
         if (atBottom) {
             messagesContainer.scrollBottom(0);
         }
+        // Resume observer
+        startObserver(observer);
     });
 
     function parseEmoteSet(set) {
+        // Ignore changes made here
+        stopObserver(chat_observer);
+        // Get the set of all messages
         var messages = $(".markup, .message-content").not(":has(.message-content)");
+        // Process messages
         messages.parseEmotes([set]).find(".kawaii-parseemotes").fancyTooltip();
+        // Resume observer
+        startObserver(chat_observer);
     }
 
     twitchEmotes.load({success: parseEmoteSet});
@@ -583,7 +603,7 @@
     //ffzEmotes.load({success: parseEmoteSet});
     sfmlabEmotes.load({success: parseEmoteSet});
 
-    chat_observer.observe(document, { childList:true, subtree:true });
+    startObserver(chat_observer);
 
     // For console debugging
     window.jq = $;
