@@ -534,21 +534,21 @@
     };
 
     // Helper function for finding all elements matching selector affected by a mutation
-    var mutationFind = function (mutation, selector) {
+    function mutationFind(mutation, selector) {
         var target = $(mutation.target), addedNodes = $(mutation.addedNodes);
         var mutated = target.add(addedNodes).filter(selector);
         var descendants = addedNodes.find(selector);
         var ancestors = target.parents(selector);
         return mutated.add(descendants).add(ancestors);
-    };
+    }
 
     // Helper function for finding all elements matching selector removed by a mutation
-    var mutationFindRemoved = function (mutation, selector) {
+    function mutationFindRemoved(mutation, selector) {
         var removedNodes = $(mutation.removedNodes);
         var mutated = removedNodes.filter(selector);
         var descendants = removedNodes.find(selector);
         return mutated.add(descendants);
-    };
+    }
 
     // Watch for new chat messages
     var chat_observer = new MutationObserver(function (mutations, observer) {
@@ -573,10 +573,10 @@
         }
     });
 
-    var parseEmoteSet = function (set) {
+    function parseEmoteSet(set) {
         var messages = $(".markup, .message-content").not(":has(.message-content)");
-        messages.parseEmotes([set]).fancyTooltip();
-    };
+        messages.parseEmotes([set]).find(".kawaii-parseemotes").fancyTooltip();
+    }
 
     twitchEmotes.load({success: parseEmoteSet});
     //twitchSubEmotes.load({success: parseEmoteSet});
