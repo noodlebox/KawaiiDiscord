@@ -161,26 +161,67 @@
         // Show possible completions
         function renderCompletions(force=true) {
             /* jshint validthis: true */
-            if (!force) {
-                return;
-            }
+            const channelTextarea = $(this).closest(".channel-textarea");
+            const oldAutocomplete = channelTextarea.children(".kawaii-autocomplete");
 
             const cached = matchCache.get(this);
 
             if (cached === undefined) {
+                oldAutocomplete.remove();
                 return;
             }
 
             const {completions, matchText, selectedIndex} = cached;
 
             if (completions.length === 0) {
+                oldAutocomplete.remove();
+                return;
+            }
+
+            if (!force && oldAutocomplete.length !== 0) {
                 return;
             }
 
             const firstIndex = Math.max(0, Math.min(selectedIndex-2, completions.length-10));
-            const matchList = completions.slice(firstIndex, firstIndex+10)
-                .map((e,i) => ((i+firstIndex===selectedIndex) ? "[ "+e[0]+" ]" : e[0]));
-            console.debug("emotes matching", matchText, "...", ...matchList);
+            const matchList = completions.slice(firstIndex, firstIndex+10);
+
+            const autocomplete = $("<div>", {
+                "class": "channel-textarea-autocomplete kawaii-autocomplete",
+                css: {display: "block"},
+            });
+            const autocompleteInner = $("<div>", {"class": "channel-textarea-autocomplete-inner"})
+                .appendTo(autocomplete);
+            $("<header>")
+                .append($("<div>", {text: "Emotes matching "}).append($("<strong>", {text: matchText})))
+                .appendTo(autocompleteInner);
+            $("<ul>")
+                .append(matchList.map((e,i) => {
+                    let li = $("<li>", {text: e[0]}).prepend(e[1]());
+                    if (i+firstIndex === selectedIndex) {
+                        li.addClass("active");
+                    }
+                    li.on("mouseenter.kawaii-complete", e => {
+                        cached.selectedIndex = i+firstIndex;
+                        li.siblings(".active").removeClass("active");
+                        li.addClass("active");
+                    }).on("mousedown.kawaii-complete", e => {
+                        cached.selectedIndex = i+firstIndex;
+                        insertSelectedCompletion.call(this);
+                    });
+                    return li;
+                }))
+                .appendTo(autocompleteInner);
+
+            oldAutocomplete.remove();
+
+            channelTextarea
+                .append(autocomplete);
+        }
+
+        function destroyCompletions() {
+            /* jshint validthis: true */
+            matchCache.delete(this);
+            renderCompletions.call(this, true);
         }
 
         // Insert selected completion at cursor position
@@ -200,7 +241,7 @@
             this.value = left + right;
             this.selectionStart = this.selectionEnd = left.length;
 
-            matchCache.delete(this);
+            destroyCompletions.call(this);
         }
 
         // Check for matches (overrides TextareaAutosize's onClick, onKeyPress, onKeyUp, maybeShowAutocomplete)
@@ -216,17 +257,18 @@
                 matchCache.set(this, cached);
             }
 
-            const {completions, matchStart} = cached;
+            const {completions, matchText, matchStart} = cached;
 
             // If an emote match is impossible, don't override default behavior.
             // This allows other completion types (like usernames or channels) to work as usual.
             if (matchStart === -1) {
+                destroyCompletions.call(this);
                 return;
             }
 
             // Don't override enter when there are no actual completions.
             // This allows message sending to work as usual.
-            if (e.which === 13 && completions.length === 0) {
+            if (e.which === 13 && (completions.length === 0 || !matchText.startsWith(":"))) {
                 return;
             }
 
@@ -246,17 +288,21 @@
                 return;
             }
 
-            const {completions, matchStart, selectedIndex} = cached;
+            const {completions, matchText, selectedIndex} = cached;
 
             if (completions.length === 0) {
                 return;
             }
 
             switch (e.which) {
-                // Tab
-                case 9:
                 // Enter
                 case 13:
+                    if (!matchText.startsWith(":")) {
+                        break;
+                    }
+                    /* falls through */
+                // Tab
+                case 9:
                     // Prevent Discord's default behavior (send message)
                     e.stopPropagation();
                     // Prevent adding a tab or line break to text
@@ -295,6 +341,7 @@
         $(".app").on({
             "keyup.kawaii-complete keypress.kawaii-complete click.kawaii-complete": checkCompletions,
             "keydown.kawaii-complete": browseCompletions,
+            "blur.kawaii-complete": destroyCompletions,
         }, ".channel-textarea textarea");
     }
 
