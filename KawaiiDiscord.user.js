@@ -163,7 +163,7 @@
         let textarea;
 
         // Show possible completions
-        function renderCompletions(force=true) {
+        let renderCompletions = _.debounce(function () {
             const channelTextarea = $(textarea).closest(".channel-textarea");
             const oldAutocomplete = channelTextarea.children(".kawaii-autocomplete");
 
@@ -174,9 +174,6 @@
                 return;
             }
 
-            if (!force && oldAutocomplete.length !== 0) {
-                return;
-            }
 
             const firstIndex = Math.max(0, Math.min(selectedIndex-2, completions.length-10));
             const matchList = completions.slice(firstIndex, firstIndex+10);
@@ -212,11 +209,12 @@
 
             channelTextarea
                 .append(autocomplete);
-        }
+        }, 250);
 
         function destroyCompletions() {
             cached = {};
-            renderCompletions(true);
+            renderCompletions();
+            renderCompletions.flush();
         }
 
         // Insert selected completion at cursor position
@@ -268,7 +266,7 @@
             // This prevents Discord's emoji autocompletion from kicking in intermittently.
             e.stopPropagation();
 
-            renderCompletions(lastText !== candidateText);
+            renderCompletions();
         }
 
         // Browse or insert matches (overrides ChannelTextArea's onKeyDown)
@@ -308,7 +306,8 @@
                     e.preventDefault();
 
                     cached.selectedIndex = (selectedIndex - 1 + completions.length) % completions.length;
-                    renderCompletions(true);
+                    renderCompletions();
+                    renderCompletions.flush();
                     break;
 
                 // Down
@@ -320,7 +319,8 @@
                     e.preventDefault();
 
                     cached.selectedIndex = (selectedIndex + 1) % completions.length;
-                    renderCompletions(true);
+                    renderCompletions();
+                    renderCompletions.flush();
                     break;
             }
         }
