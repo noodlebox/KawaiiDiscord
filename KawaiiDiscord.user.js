@@ -87,6 +87,221 @@
         });
         return emote;
     };
+    EmoteSet.prototype.search = function (query) {
+        const score = function (name, query) {
+            name = name.toLowerCase();
+            query = query.toLowerCase();
+            const d = name.length - query.length;
+            const i = name.indexOf(query);
+            if (i === -1) {
+                return 0;
+            }
+            return 1 + (i+1)*(d-i+2);
+        };
+        return [...this.emoteMap.keys()]
+            .map(e => [e, score(e, query)])
+            .filter(e => e[1] !== 0);
+    };
+
+    function getCompletionsStandard(emoteSets, text) {
+        const match = text.match(/(^|\s):(\w{2,})$/);
+        if (match === null) {
+            return {completions: [], matchText: null, matchStart: -1};
+        }
+
+        const completions = emoteSets
+            .filter(s => s.emoteStyle === EmoteSet.emoteStyle.STANDARD)
+            .map(s => s.search(match[2]).map(e => [[":"+e[0]+":", s.createEmote.bind(s, e[0])], e[1]]))
+            .reduce((a,b) => a.concat(b), []);
+        const matchText = ":"+match[2], matchStart = match.index + match[1].length;
+
+        return {completions, matchText, matchStart};
+    }
+
+    function getCompletionsTwitch(emoteSets, text) {
+        const match = text.match(/(^|\s)(\w{3,})$/);
+        if (match === null) {
+            return {completions: [], matchText: null, matchStart: -1};
+        }
+
+        const completions = emoteSets
+            .filter(s => s.emoteStyle === EmoteSet.emoteStyle.TWITCH)
+            .map(s => s.search(match[2]).map(e => [[e[0], s.createEmote.bind(s, e[0])], e[1]]))
+            .reduce((a,b) => a.concat(b), []);
+        const matchText = match[2], matchStart = match.index + match[1].length;
+
+        return {completions, matchText, matchStart};
+    }
+
+    function getCompletions(emoteSets, text, sorted=true) {
+        let {completions, matchText, matchStart} = getCompletionsStandard(emoteSets, text);
+        if (matchStart === -1) {
+            ({completions, matchText, matchStart} = getCompletionsTwitch(emoteSets, text));
+        }
+
+        if (sorted) {
+            const compare = new Intl.Collator(undefined, {
+                usage: "sort",
+                sensitivity: "base",
+                numeric: true,
+            }).compare;
+
+            completions.sort((a,b) => ((a[1]===b[1]) ? compare(a[0],b[0]) : (a[1]-b[1])));
+        }
+        completions = completions.map(e => e[0]);
+
+        return {completions, matchText, matchStart};
+    }
+
+    // Set up event handlers
+    function startTabComplete(emoteSets) {
+        // Cached information about an element's possible completions
+        const matchCache = new WeakMap();
+
+        // Show possible completions
+        function renderCompletions(force=true) {
+            /* jshint validthis: true */
+            if (!force) {
+                return;
+            }
+
+            const cached = matchCache.get(this);
+
+            if (cached === undefined) {
+                return;
+            }
+
+            const {completions, matchText, selectedIndex} = cached;
+
+            if (completions.length === 0) {
+                return;
+            }
+
+            const firstIndex = Math.max(0, Math.min(selectedIndex-2, completions.length-10));
+            const matchList = completions.slice(firstIndex, firstIndex+10)
+                .map((e,i) => ((i+firstIndex===selectedIndex) ? "[ "+e[0]+" ]" : e[0]));
+            console.debug("emotes matching", matchText, "...", ...matchList);
+        }
+
+        // Insert selected completion at cursor position
+        function insertSelectedCompletion() {
+            /* jshint validthis: true */
+            const cached = matchCache.get(this);
+
+            if (cached === undefined) {
+                return;
+            }
+
+            const {completions, matchStart, selectedIndex} = cached;
+
+            const left = this.value.slice(0, matchStart) + completions[selectedIndex][0] + " ";
+            const right = this.value.slice(this.selectionEnd);
+
+            this.value = left + right;
+            this.selectionStart = this.selectionEnd = left.length;
+
+            matchCache.delete(this);
+        }
+
+        // Check for matches (overrides TextareaAutosize's onClick, onKeyPress, onKeyUp, maybeShowAutocomplete)
+        function checkCompletions(e) {
+            /* jshint validthis: true */
+            let cached = matchCache.get(this);
+            const {candidateText: lastText} = cached || {};
+            const candidateText = this.value.slice(0, this.selectionEnd);
+
+            if (lastText !== candidateText) {
+                const {completions, matchText, matchStart} = getCompletions(emoteSets, candidateText);
+                cached = {candidateText, completions, matchText, matchStart, selectedIndex: 0};
+                matchCache.set(this, cached);
+            }
+
+            const {completions, matchStart} = cached;
+
+            // If an emote match is impossible, don't override default behavior.
+            // This allows other completion types (like usernames or channels) to work as usual.
+            if (matchStart === -1) {
+                return;
+            }
+
+            // Don't override enter when there are no actual completions.
+            // This allows message sending to work as usual.
+            if (e.which === 13 && completions.length === 0) {
+                return;
+            }
+
+            // For any other key, always override, even when there are no actual completions.
+            // This prevents Discord's emoji autocompletion from kicking in intermittently.
+            e.stopPropagation();
+
+            renderCompletions.call(this, lastText !== candidateText);
+        }
+
+        // Browse or insert matches (overrides ChannelTextArea's onKeyDown)
+        function browseCompletions(e) {
+            /* jshint validthis: true */
+            const cached = matchCache.get(this);
+
+            if (cached === undefined) {
+                return;
+            }
+
+            const {completions, matchStart, selectedIndex} = cached;
+
+            if (completions.length === 0) {
+                return;
+            }
+
+            switch (e.which) {
+                // Tab
+                case 9:
+                // Enter
+                case 13:
+                    // Prevent Discord's default behavior (send message)
+                    e.stopPropagation();
+                    // Prevent adding a tab or line break to text
+                    e.preventDefault();
+
+                    insertSelectedCompletion.call(this);
+                    break;
+
+                // Up
+                case 38:
+
+                    // Prevent Discord's default behavior (edit)
+                    e.stopPropagation();
+                    // Prevent cursor movement
+                    e.preventDefault();
+
+                    cached.selectedIndex = (selectedIndex - 1 + completions.length) % completions.length;
+                    renderCompletions.call(this, true);
+                    break;
+
+                // Down
+                case 40:
+
+                    // Prevent Discord's default behavior
+                    e.stopPropagation();
+                    // Prevent cursor movement
+                    e.preventDefault();
+
+                    cached.selectedIndex = (selectedIndex + 1) % completions.length;
+                    renderCompletions.call(this, true);
+                    break;
+            }
+        }
+
+        // Check for matches
+        $(".app").on({
+            "keyup.kawaii-complete keypress.kawaii-complete click.kawaii-complete": checkCompletions,
+            "keydown.kawaii-complete": browseCompletions,
+        }, ".channel-textarea textarea");
+    }
+
+    // Tear down event handlers and clean up
+    function stopTabComplete() {
+        $(".app").off(".kawaii-complete", ".channel-textarea textarea");
+    }
 
     // Filter function for "Twitch-style" emotes, to avoid collisions with common words
     // Check if at least 3 word characters, and has at least one capital letter
@@ -574,6 +789,8 @@
     twitchEmotes.load({success: parseEmoteSet});
     //twitchSubEmotes.load({success: parseEmoteSet});
     sfmlabEmotes.load({success: parseEmoteSet});
+
+    startTabComplete([sfmlabEmotes, twitchEmotes, twitchSubEmotes]);
 
     startObserver(chat_observer);
 })(jQuery.noConflict(true));
