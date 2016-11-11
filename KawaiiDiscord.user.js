@@ -134,22 +134,11 @@
         return {completions, matchText, matchStart};
     }
 
-    function getCompletions(emoteSets, text, sorted=true) {
+    function getCompletions(emoteSets, text) {
         let {completions, matchText, matchStart} = getCompletionsStandard(emoteSets, text);
         if (matchStart === -1) {
             ({completions, matchText, matchStart} = getCompletionsTwitch(emoteSets, text));
         }
-
-        if (sorted) {
-            const compare = new Intl.Collator(undefined, {
-                usage: "sort",
-                sensitivity: "base",
-                numeric: true,
-            }).compare;
-
-            completions.sort((a,b) => ((a[1]===b[1]) ? compare(a[0],b[0]) : (a[1]-b[1])));
-        }
-        completions = completions.map(e => e[0]);
 
         return {completions, matchText, matchStart};
     }
@@ -174,9 +163,10 @@
                 return;
             }
 
+            sortCompletions();
 
             const firstIndex = Math.max(0, Math.min(selectedIndex-2, completions.length-10));
-            const matchList = completions.slice(firstIndex, firstIndex+10);
+            const matchList = completions.slice(firstIndex, firstIndex+10).map(e => e[0]);
 
             const autocomplete = $("<div>", {
                 "class": "channel-textarea-autocomplete kawaii-autocomplete",
@@ -217,6 +207,21 @@
             renderCompletions.flush();
         }
 
+        function sortCompletions() {
+            const {completions, sorted} = cached;
+
+            if (completions !== undefined && !sorted) {
+                const compare = new Intl.Collator(undefined, {
+                    usage: "sort",
+                    sensitivity: "base",
+                    numeric: true,
+                }).compare;
+
+                completions.sort((a,b) => ((a[1]===b[1]) ? compare(a[0],b[0]) : (a[1]-b[1])));
+                cached.sorted = true;
+            }
+        }
+
         // Insert selected completion at cursor position
         function insertSelectedCompletion() {
             const {completions, matchStart, selectedIndex} = cached;
@@ -225,7 +230,9 @@
                 return;
             }
 
-            const left = textarea.value.slice(0, matchStart) + completions[selectedIndex][0] + " ";
+            sortCompletions();
+
+            const left = textarea.value.slice(0, matchStart) + completions[selectedIndex][0][0] + " ";
             const right = textarea.value.slice(textarea.selectionEnd);
 
             textarea.value = left + right;
@@ -244,7 +251,7 @@
 
             if (lastText !== candidateText) {
                 const {completions, matchText, matchStart} = getCompletions(emoteSets, candidateText);
-                cached = {candidateText, completions, matchText, matchStart, selectedIndex: 0};
+                cached = {candidateText, completions, matchText, matchStart, sorted: false, selectedIndex: 0};
             }
 
             const {completions, matchText, matchStart} = cached;
