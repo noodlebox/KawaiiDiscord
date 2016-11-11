@@ -6,6 +6,7 @@
 // @description  Break SFMLab Chat (now for Discord!)
 // @author       noodlebox
 // @require      https://code.jquery.com/jquery-3.1.1.min.js
+// @require      https://cdn.jsdelivr.net/lodash/4.16.3/lodash.min.js
 // @match        *://discordapp.com/channels/*
 // @match        *://discordapp.com/invite/*
 // @match        *://canary.discordapp.com/channels/*
@@ -14,7 +15,7 @@
 // @grant        none
 // ==/UserScript==
 
-(function ($) {
+(function ($, _) {
     "use strict";
 
     // Emote data
@@ -827,6 +828,6 @@
     startTabComplete([sfmlabEmotes, twitchEmotes, twitchSubEmotes]);
 
     startObserver(chat_observer);
-})(jQuery.noConflict(true));
+})(jQuery.noConflict(true), _.noConflict());
 
 // vim: et:ts=4:sw=4:sts=4
