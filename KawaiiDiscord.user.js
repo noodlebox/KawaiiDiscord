@@ -155,25 +155,20 @@
 
     // Set up event handlers
     function startTabComplete(emoteSets) {
-        // Cached information about an element's possible completions
-        const matchCache = new WeakMap();
+        // Cached information about possible completions
+        // Conflicts should be avoidable, as this is cleared on focus loss
+        let cached = {};
+
+        let textarea;
 
         // Show possible completions
         function renderCompletions(force=true) {
-            /* jshint validthis: true */
-            const channelTextarea = $(this).closest(".channel-textarea");
+            const channelTextarea = $(textarea).closest(".channel-textarea");
             const oldAutocomplete = channelTextarea.children(".kawaii-autocomplete");
-
-            const cached = matchCache.get(this);
-
-            if (cached === undefined) {
-                oldAutocomplete.remove();
-                return;
-            }
 
             const {completions, matchText, selectedIndex} = cached;
 
-            if (completions.length === 0) {
+            if (completions === undefined || completions.length === 0) {
                 oldAutocomplete.remove();
                 return;
             }
@@ -206,7 +201,7 @@
                         li.addClass("active");
                     }).on("mousedown.kawaii-complete", e => {
                         cached.selectedIndex = i+firstIndex;
-                        insertSelectedCompletion.call(this);
+                        insertSelectedCompletion();
                     });
                     return li;
                 }))
@@ -219,42 +214,38 @@
         }
 
         function destroyCompletions() {
-            /* jshint validthis: true */
-            matchCache.delete(this);
-            renderCompletions.call(this, true);
+            cached = {};
+            renderCompletions(true);
         }
 
         // Insert selected completion at cursor position
         function insertSelectedCompletion() {
-            /* jshint validthis: true */
-            const cached = matchCache.get(this);
+            const {completions, matchStart, selectedIndex} = cached;
 
-            if (cached === undefined) {
+            if (completions === undefined) {
                 return;
             }
 
-            const {completions, matchStart, selectedIndex} = cached;
+            const left = textarea.value.slice(0, matchStart) + completions[selectedIndex][0] + " ";
+            const right = textarea.value.slice(textarea.selectionEnd);
 
-            const left = this.value.slice(0, matchStart) + completions[selectedIndex][0] + " ";
-            const right = this.value.slice(this.selectionEnd);
+            textarea.value = left + right;
+            textarea.selectionStart = textarea.selectionEnd = left.length;
 
-            this.value = left + right;
-            this.selectionStart = this.selectionEnd = left.length;
-
-            destroyCompletions.call(this);
+            destroyCompletions();
         }
 
         // Check for matches (overrides TextareaAutosize's onClick, onKeyPress, onKeyUp, maybeShowAutocomplete)
         function checkCompletions(e) {
             /* jshint validthis: true */
-            let cached = matchCache.get(this);
-            const {candidateText: lastText} = cached || {};
-            const candidateText = this.value.slice(0, this.selectionEnd);
+            textarea = this;
+
+            const {candidateText: lastText} = cached;
+            const candidateText = textarea.value.slice(0, textarea.selectionEnd);
 
             if (lastText !== candidateText) {
                 const {completions, matchText, matchStart} = getCompletions(emoteSets, candidateText);
                 cached = {candidateText, completions, matchText, matchStart, selectedIndex: 0};
-                matchCache.set(this, cached);
             }
 
             const {completions, matchText, matchStart} = cached;
@@ -262,7 +253,7 @@
             // If an emote match is impossible, don't override default behavior.
             // This allows other completion types (like usernames or channels) to work as usual.
             if (matchStart === -1) {
-                destroyCompletions.call(this);
+                destroyCompletions();
                 return;
             }
 
@@ -276,21 +267,17 @@
             // This prevents Discord's emoji autocompletion from kicking in intermittently.
             e.stopPropagation();
 
-            renderCompletions.call(this, lastText !== candidateText);
+            renderCompletions(lastText !== candidateText);
         }
 
         // Browse or insert matches (overrides ChannelTextArea's onKeyDown)
         function browseCompletions(e) {
             /* jshint validthis: true */
-            const cached = matchCache.get(this);
-
-            if (cached === undefined) {
-                return;
-            }
+            textarea = this;
 
             const {completions, matchText, selectedIndex} = cached;
 
-            if (completions.length === 0) {
+            if (completions === undefined || completions.length === 0) {
                 return;
             }
 
@@ -308,7 +295,7 @@
                     // Prevent adding a tab or line break to text
                     e.preventDefault();
 
-                    insertSelectedCompletion.call(this);
+                    insertSelectedCompletion();
                     break;
 
                 // Up
@@ -320,7 +307,7 @@
                     e.preventDefault();
 
                     cached.selectedIndex = (selectedIndex - 1 + completions.length) % completions.length;
-                    renderCompletions.call(this, true);
+                    renderCompletions(true);
                     break;
 
                 // Down
@@ -332,7 +319,7 @@
                     e.preventDefault();
 
                     cached.selectedIndex = (selectedIndex + 1) % completions.length;
-                    renderCompletions.call(this, true);
+                    renderCompletions(true);
                     break;
             }
         }
