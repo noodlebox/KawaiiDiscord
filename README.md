@@ -6,9 +6,7 @@ Also, a few features from BetterDiscord, ported to the web client.
 
 **KawaiiDiscord.user.js (for the web client)**
 
-A userscript, last tested in Chrome 53 and Firefox 48. You will most likely need a userscript manager:
-- [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=en) (Chrome)
-- [GreaseMonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) (Firefox)
+A userscript, last tested in Chrome 54 and Firefox 48. You will most likely need a userscript manager, such as [Tampermonkey](https://tampermonkey.net).
 
 **KawaiiDiscord.plugin.js (for the standalone client)**
 
@@ -21,3 +19,4 @@ Although BetterDiscord already supports Twitch emotes, this plugin parses them m
 - Support for "mikeroll" style emotes, e.g. :mike#: randomly selects from [:mike:, :mike2:, ..., :mike124:]
 - Loads emote lists at startup
 - Fancy Discord-style tooltips for emotes
+- Scrollable tab-completion menu for both emote styles (overrides default completion behavior for emoji)
