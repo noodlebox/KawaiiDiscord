@@ -134,11 +134,25 @@
         return {completions, matchText, matchStart};
     }
 
+    const emoteComparator = (function () {
+        const compare = new Intl.Collator(undefined, {
+            usage: "sort",
+            sensitivity: "base",
+            numeric: true,
+        }).compare;
+
+        return (a,b) => ((a[1]===b[1]) ? compare(a[0],b[0]) : (a[1]-b[1]));
+    })();
+
     function getCompletions(emoteSets, text) {
         let {completions, matchText, matchStart} = getCompletionsStandard(emoteSets, text);
         if (matchStart === -1) {
             ({completions, matchText, matchStart} = getCompletionsTwitch(emoteSets, text));
         }
+
+        completions = completions
+            .sort(emoteComparator)
+            .map(e => e[0]);
 
         return {completions, matchText, matchStart};
     }
@@ -151,22 +165,27 @@
 
         let textarea;
 
+        const shouldCompleteStandard = RegExp.prototype.test.bind(/(?:^|\s):\w{2,}$/);
+
+        const shouldCompleteTwitch = RegExp.prototype.test.bind(/(?:^|\s)\w{3,}$/);
+
+        const shouldComplete = RegExp.prototype.test.bind(/(?:^|\s)(?:\w|:)\w{2,}$/);
+
         // Show possible completions
         let renderCompletions = _.debounce(function () {
             const channelTextarea = $(textarea).closest(".channel-textarea");
             const oldAutocomplete = channelTextarea.children(".kawaii-autocomplete");
 
-            const {completions, matchText, selectedIndex} = cached;
-
-            if (completions === undefined || completions.length === 0) {
+            const candidateText = textarea.value.slice(0, textarea.selectionEnd);
+            if (!shouldComplete(candidateText) || !prepareCompletions()) {
                 oldAutocomplete.remove();
                 return;
             }
 
-            sortCompletions();
+            const {completions, matchText, selectedIndex} = cached;
 
             const firstIndex = Math.max(0, Math.min(selectedIndex-2, completions.length-10));
-            const matchList = completions.slice(firstIndex, firstIndex+10).map(e => e[0]);
+            const matchList = completions.slice(firstIndex, firstIndex+10);
 
             const autocomplete = $("<div>", {
                 "class": "channel-textarea-autocomplete kawaii-autocomplete",
@@ -201,25 +220,25 @@
                 .append(autocomplete);
         }, 250);
 
-        function destroyCompletions() {
-            cached = {};
-            renderCompletions();
-            renderCompletions.flush();
+        function prepareCompletions() {
+            const candidateText = textarea.value.slice(0, textarea.selectionEnd);
+            const {candidateText: lastText} = cached;
+
+            if (lastText !== candidateText) {
+                const {completions, matchText, matchStart} = getCompletions(emoteSets, candidateText);
+                cached = {candidateText, completions, matchText, matchStart, selectedIndex: 0};
+            }
+
+            const {completions} = cached;
+            return (completions !== undefined && completions.length !== 0);
         }
 
-        function sortCompletions() {
-            const {completions, sorted} = cached;
-
-            if (completions !== undefined && !sorted) {
-                const compare = new Intl.Collator(undefined, {
-                    usage: "sort",
-                    sensitivity: "base",
-                    numeric: true,
-                }).compare;
-
-                completions.sort((a,b) => ((a[1]===b[1]) ? compare(a[0],b[0]) : (a[1]-b[1])));
-                cached.sorted = true;
-            }
+        function destroyCompletions() {
+            const channelTextarea = $(textarea).closest(".channel-textarea");
+            const oldAutocomplete = channelTextarea.children(".kawaii-autocomplete");
+            oldAutocomplete.remove();
+            cached = {};
+            renderCompletions.cancel();
         }
 
         // Insert selected completion at cursor position
@@ -230,9 +249,7 @@
                 return;
             }
 
-            sortCompletions();
-
-            const left = textarea.value.slice(0, matchStart) + completions[selectedIndex][0][0] + " ";
+            const left = textarea.value.slice(0, matchStart) + completions[selectedIndex][0] + " ";
             const right = textarea.value.slice(textarea.selectionEnd);
 
             textarea.value = left + right;
@@ -246,27 +263,26 @@
             /* jshint validthis: true */
             textarea = this;
 
-            const {candidateText: lastText} = cached;
             const candidateText = textarea.value.slice(0, textarea.selectionEnd);
-
-            if (lastText !== candidateText) {
-                const {completions, matchText, matchStart} = getCompletions(emoteSets, candidateText);
-                cached = {candidateText, completions, matchText, matchStart, sorted: false, selectedIndex: 0};
-            }
-
-            const {completions, matchText, matchStart} = cached;
 
             // If an emote match is impossible, don't override default behavior.
             // This allows other completion types (like usernames or channels) to work as usual.
-            if (matchStart === -1) {
+            if (!shouldComplete(candidateText)) {
                 destroyCompletions();
                 return;
             }
 
             // Don't override enter when there are no actual completions.
             // This allows message sending to work as usual.
-            if (e.which === 13 && (completions.length === 0 || !matchText.startsWith(":"))) {
-                return;
+            if (e.which === 13) {
+                // Only potentially override enter for standard-style emotes
+                if (!shouldCompleteStandard(candidateText)) {
+                    return;
+                }
+
+                if (!prepareCompletions()) {
+                    return;
+                }
             }
 
             // For any other key, always override, even when there are no actual completions.
@@ -281,21 +297,25 @@
             /* jshint validthis: true */
             textarea = this;
 
-            const {completions, matchText, selectedIndex} = cached;
-
-            if (completions === undefined || completions.length === 0) {
+            const candidateText = textarea.value.slice(0, textarea.selectionEnd);
+            if (!shouldComplete(candidateText)) {
                 return;
             }
 
             switch (e.which) {
                 // Enter
                 case 13:
-                    if (!matchText.startsWith(":")) {
+                    if (!shouldCompleteStandard(candidateText)) {
                         break;
                     }
                     /* falls through */
                 // Tab
                 case 9:
+
+                    if (!prepareCompletions()) {
+                        break;
+                    }
+
                     // Prevent Discord's default behavior (send message)
                     e.stopPropagation();
                     // Prevent adding a tab or line break to text
@@ -307,12 +327,18 @@
                 // Up
                 case 38:
 
+                    if (!prepareCompletions()) {
+                        break;
+                    } else {
+                        const {completions, selectedIndex} = cached;
+                        cached.selectedIndex = (selectedIndex - 1 + completions.length) % completions.length;
+                    }
+
                     // Prevent Discord's default behavior (edit)
                     e.stopPropagation();
                     // Prevent cursor movement
                     e.preventDefault();
 
-                    cached.selectedIndex = (selectedIndex - 1 + completions.length) % completions.length;
                     renderCompletions();
                     renderCompletions.flush();
                     break;
@@ -320,12 +346,18 @@
                 // Down
                 case 40:
 
+                    if (!prepareCompletions()) {
+                        break;
+                    } else {
+                        const {completions, selectedIndex} = cached;
+                        cached.selectedIndex = (selectedIndex + 1) % completions.length;
+                    }
+
                     // Prevent Discord's default behavior
                     e.stopPropagation();
                     // Prevent cursor movement
                     e.preventDefault();
 
-                    cached.selectedIndex = (selectedIndex + 1) % completions.length;
                     renderCompletions();
                     renderCompletions.flush();
                     break;
