@@ -223,7 +223,7 @@
         }, 250);
 
         // Scroll through the "window" of completions
-        function scrollWindow(delta, {locked=false} = {}) {
+        function scrollWindow(delta, {locked=false, clamped=false} = {}) {
             const {completions, selectedIndex: prevSel, windowOffset} = cached;
 
             if (completions === undefined || completions.length === 0) {
@@ -232,7 +232,13 @@
 
             // Change selected index
             const num = completions.length;
-            const sel = cached.selectedIndex = (prevSel + delta + num) % num;
+            let sel = prevSel + delta;
+            if (clamped) {
+                sel = _.clamp(sel, 0, num-1);
+            } else {
+                sel = (sel % num) + (sel<0 ? num : 0);
+            }
+            cached.selectedIndex = sel;
 
             // Clamp window position to bounds based on new selected index
             const boundLower = _.clamp(sel + preScroll - (windowSize-1), 0, num-windowSize);
@@ -325,6 +331,8 @@
                 return;
             }
 
+            let delta = 0, options;
+
             switch (e.which) {
                 // Enter
                 case 13:
@@ -349,33 +357,34 @@
 
                 // Up
                 case 38:
-
-                    if (!prepareCompletions()) {
-                        break;
-                    }
-
-                    // Prevent Discord's default behavior (edit)
-                    e.stopPropagation();
-                    // Prevent cursor movement
-                    e.preventDefault();
-
-                    scrollWindow(-1);
+                    delta = -1;
                     break;
 
                 // Down
                 case 40:
-
-                    if (!prepareCompletions()) {
-                        break;
-                    }
-
-                    // Prevent Discord's default behavior
-                    e.stopPropagation();
-                    // Prevent cursor movement
-                    e.preventDefault();
-
-                    scrollWindow(1);
+                    delta = 1;
                     break;
+
+                // Page Up
+                case 33:
+                    delta = -windowSize;
+                    options = {locked: true, clamped: true};
+                    break;
+
+                // Page Down
+                case 34:
+                    delta = windowSize;
+                    options = {locked: true, clamped: true};
+                    break;
+            }
+
+            if (delta !== 0 && prepareCompletions()) {
+                // Prevent Discord's default behavior
+                e.stopPropagation();
+                // Prevent cursor movement
+                e.preventDefault();
+
+                scrollWindow(delta, options);
             }
         }
 
