@@ -165,6 +165,8 @@
 
         let textarea;
 
+        const windowSize = 10, preScroll = 2;
+
         const shouldCompleteStandard = RegExp.prototype.test.bind(/(?:^|\s):\w{2,}$/);
 
         const shouldCompleteTwitch = RegExp.prototype.test.bind(/(?:^|\s)\w{3,}$/);
@@ -182,17 +184,16 @@
                 return;
             }
 
-            const {completions, matchText, selectedIndex} = cached;
+            const {completions, matchText, selectedIndex, windowOffset: firstIndex} = cached;
 
-            const firstIndex = Math.max(0, Math.min(selectedIndex-2, completions.length-10));
-            const matchList = completions.slice(firstIndex, firstIndex+10);
+            const matchList = completions.slice(firstIndex, firstIndex+windowSize);
 
             const autocomplete = $("<div>", {
                 "class": "channel-textarea-autocomplete kawaii-autocomplete",
                 css: {display: "block"},
             });
             const autocompleteInner = $("<div>", {"class": "channel-textarea-autocomplete-inner"})
-                .on("wheel.kawaii-complete", scrollCompletions)
+                .on("wheel.kawaii-complete", _.partial(scrollCompletions, _, {locked: true}))
                 .appendTo(autocomplete);
             $("<header>")
                 .append($("<div>", {text: "Emotes matching "}).append($("<strong>", {text: matchText})))
@@ -221,13 +222,35 @@
                 .append(autocomplete);
         }, 250);
 
+        // Scroll through the "window" of completions
+        function scrollWindow(delta, {locked=false} = {}) {
+            const {completions, selectedIndex: prevSel, windowOffset} = cached;
+
+            if (completions === undefined || completions.length === 0) {
+                return;
+            }
+
+            // Change selected index
+            const num = completions.length;
+            const sel = cached.selectedIndex = (prevSel + delta + num) % num;
+
+            // Clamp window position to bounds based on new selected index
+            const boundLower = _.clamp(sel + preScroll - (windowSize-1), 0, num-windowSize);
+            const boundUpper = _.clamp(sel - preScroll, 0, num-windowSize);
+            cached.windowOffset = _.clamp(windowOffset + (locked ? delta : 0), boundLower, boundUpper);
+
+            // Render immediately
+            renderCompletions();
+            renderCompletions.flush();
+        }
+
         function prepareCompletions() {
             const candidateText = textarea.value.slice(0, textarea.selectionEnd);
             const {candidateText: lastText} = cached;
 
             if (lastText !== candidateText) {
                 const {completions, matchText, matchStart} = getCompletions(emoteSets, candidateText);
-                cached = {candidateText, completions, matchText, matchStart, selectedIndex: 0};
+                cached = {candidateText, completions, matchText, matchStart, selectedIndex: 0, windowOffset: 0};
             }
 
             const {completions} = cached;
@@ -329,9 +352,6 @@
 
                     if (!prepareCompletions()) {
                         break;
-                    } else {
-                        const {completions, selectedIndex} = cached;
-                        cached.selectedIndex = (selectedIndex - 1 + completions.length) % completions.length;
                     }
 
                     // Prevent Discord's default behavior (edit)
@@ -339,8 +359,7 @@
                     // Prevent cursor movement
                     e.preventDefault();
 
-                    renderCompletions();
-                    renderCompletions.flush();
+                    scrollWindow(-1);
                     break;
 
                 // Down
@@ -348,9 +367,6 @@
 
                     if (!prepareCompletions()) {
                         break;
-                    } else {
-                        const {completions, selectedIndex} = cached;
-                        cached.selectedIndex = (selectedIndex + 1) % completions.length;
                     }
 
                     // Prevent Discord's default behavior
@@ -358,27 +374,17 @@
                     // Prevent cursor movement
                     e.preventDefault();
 
-                    renderCompletions();
-                    renderCompletions.flush();
+                    scrollWindow(1);
                     break;
             }
         }
 
         // Scroll matches
-        function scrollCompletions(e) {
+        function scrollCompletions(e, options) {
             /* jshint validthis: true */
-            const {completions, selectedIndex} = cached;
-
-            if (completions === undefined || completions.length === 0) {
-                return;
-            }
-
             const delta = Math.sign(e.originalEvent.deltaY);
-
-            cached.selectedIndex = (selectedIndex + delta + completions.length) % completions.length;
-            renderCompletions();
-            renderCompletions.flush();
-        };
+            scrollWindow(delta, options);
+        }
 
         // Check for matches
         $(".app").on({
