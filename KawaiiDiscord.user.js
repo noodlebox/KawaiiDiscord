@@ -265,6 +265,7 @@
             textarea = this;
 
             const candidateText = textarea.value.slice(0, textarea.selectionEnd);
+            const {candidateText: lastText} = cached;
 
             // If an emote match is impossible, don't override default behavior.
             // This allows other completion types (like usernames or channels) to work as usual.
@@ -277,11 +278,7 @@
             // This allows message sending to work as usual.
             if (e.which === 13) {
                 // Only potentially override enter for standard-style emotes
-                if (!shouldCompleteStandard(candidateText)) {
-                    return;
-                }
-
-                if (!prepareCompletions()) {
+                if (!shouldCompleteStandard(candidateText) || !prepareCompletions()) {
                     return;
                 }
             }
@@ -290,7 +287,9 @@
             // This prevents Discord's emoji autocompletion from kicking in intermittently.
             e.stopPropagation();
 
-            renderCompletions();
+            if (lastText !== candidateText) {
+                renderCompletions();
+            }
         }
 
         // Browse or insert matches (overrides ChannelTextArea's onKeyDown)
