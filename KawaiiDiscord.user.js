@@ -765,7 +765,7 @@
             ".theme-light+span",
         ].join(",");
         for (let target of document.querySelectorAll(selector)) {
-            observer.observe(target, { childList:true, subtree:true });
+            observer.observe(target, { childList:true, subtree:true, characterData:true });
         }
     }
 
