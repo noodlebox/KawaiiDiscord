@@ -192,6 +192,7 @@
                 css: {display: "block"},
             });
             const autocompleteInner = $("<div>", {"class": "channel-textarea-autocomplete-inner"})
+                .on("wheel.kawaii-complete", scrollCompletions)
                 .appendTo(autocomplete);
             $("<header>")
                 .append($("<div>", {text: "Emotes matching "}).append($("<strong>", {text: matchText})))
@@ -364,10 +365,27 @@
             }
         }
 
+        // Scroll matches
+        function scrollCompletions(e) {
+            /* jshint validthis: true */
+            const {completions, selectedIndex} = cached;
+
+            if (completions === undefined || completions.length === 0) {
+                return;
+            }
+
+            const delta = Math.sign(e.originalEvent.deltaY);
+
+            cached.selectedIndex = (selectedIndex + delta + completions.length) % completions.length;
+            renderCompletions();
+            renderCompletions.flush();
+        };
+
         // Check for matches
         $(".app").on({
             "keyup.kawaii-complete keypress.kawaii-complete click.kawaii-complete": checkCompletions,
             "keydown.kawaii-complete": browseCompletions,
+            "wheel.kawaii-complete": scrollCompletions,
             "blur.kawaii-complete": destroyCompletions,
         }, ".channel-textarea textarea");
     }
