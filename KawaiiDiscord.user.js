@@ -204,7 +204,6 @@
                         li.addClass("active");
                     }
                     li.on("mouseenter.kawaii-complete", e => {
-                        cached.selectedIndex = i+firstIndex;
                         li.siblings(".active").removeClass("active");
                         li.addClass("active");
                     }).on("mousedown.kawaii-complete", e => {
