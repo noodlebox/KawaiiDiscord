@@ -219,15 +219,9 @@ var kawaii = function () {};
     // This is super hackish, and will likely break as Discord's internal API changes
     // Anything using this or what it returns should be prepared to catch some exceptions
     function getInternalProps(e) {
-        let reactInternal = e[Object.keys(e).find(k => k.startsWith("__reactInternalInstance"))];
         try {
-            let owner = reactInternal._currentElement._owner;
-            if (owner !== null) {
-                return owner._instance.props;
-            } else {
-                let index = [...e.parentNode.childNodes].indexOf(e);
-                return reactInternal._hostParent._currentElement.props.children[0][index].props;
-            }
+            var reactInternal = e[Object.keys(e).filter(k => k.startsWith("__reactInternalInstance"))[0]];
+            return reactInternal._currentElement._owner._instance.props;
         } catch (err) {
             return undefined;
         }
