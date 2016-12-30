@@ -40,16 +40,25 @@
         if (!this.caseSensitive) {
             emoteName = emoteName.toLowerCase();
         }
-        if (this.rolls && emoteName.endsWith("#")) {
-            var prefix = emoteName.slice(0, -1);
-            var table = this.search(prefix, {start: true, numeric: true}).sort();
-            if (table.length === 0) {
-                return undefined;
-            }
-            if (seed === undefined || seed === 0) {
-                emoteName = this.rollDefault;
-            } else {
-                emoteName = table[seed % table.length][0];
+        if (this.rolls) {
+            const options = {
+                start: !emoteName.startsWith("*"),
+                end: !emoteName.endsWith("*") && !emoteName.endsWith("#"),
+                numeric: emoteName.endsWith("#"),
+            };
+            if (!options.start || !options.end) {
+                const startPos = options.start ? 0 : 1;
+                const endPos = options.end ? emoteName.length : -1;
+                const query = emoteName.slice(startPos, endPos);
+                var table = this.search(query, options).sort();
+                if (table.length === 0) {
+                    return undefined;
+                }
+                if (seed === undefined || seed === 0) {
+                    emoteName = this.rollDefault;
+                } else {
+                    emoteName = table[seed % table.length][0];
+                }
             }
         }
         var path = this.emoteMap.get(emoteName);
