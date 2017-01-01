@@ -6,7 +6,7 @@
 // @description  Break SFMLab Chat (now for Discord!)
 // @author       noodlebox
 // @require      https://code.jquery.com/jquery-3.1.1.min.js
-// @require      https://cdn.jsdelivr.net/lodash/4.17.2/lodash.min.js
+// @require      https://cdn.jsdelivr.net/lodash/4.17.4/lodash.min.js
 // @match        *://*.discordapp.com/channels/*
 // @match        *://*.discordapp.com/invite/*
 // @match        *://*.discordapp.com/login
