@@ -114,8 +114,12 @@
             .filter(e => e[1] !== 0);
     };
 
+    const completeAnyRegex = /(^|\s)((?:\w|:)\w{2,})$/;
+    const completeStandardRegex = /(^|\s):(\w{2,})$/;
+    const completeTwitchRegex = /(^|\s)(\w{3,})$/;
+
     function getCompletionsStandard(emoteSets, text) {
-        const match = text.match(/(^|\s):(\w{2,})$/);
+        const match = text.match(completeStandardRegex);
         if (match === null) {
             return {completions: [], matchText: null, matchStart: -1};
         }
@@ -130,7 +134,7 @@
     }
 
     function getCompletionsTwitch(emoteSets, text) {
-        const match = text.match(/(^|\s)(\w{3,})$/);
+        const match = text.match(completeTwitchRegex);
         if (match === null) {
             return {completions: [], matchText: null, matchStart: -1};
         }
@@ -177,11 +181,11 @@
 
         const windowSize = 10, preScroll = 2;
 
-        const shouldCompleteStandard = RegExp.prototype.test.bind(/(?:^|\s):\w{2,}$/);
+        const shouldCompleteStandard = completeStandardRegex.test.bind(completeStandardRegex);
 
-        const shouldCompleteTwitch = RegExp.prototype.test.bind(/(?:^|\s)\w{3,}$/);
+        const shouldCompleteTwitch = completeTwitchRegex.test.bind(completeTwitchRegex);
 
-        const shouldComplete = RegExp.prototype.test.bind(/(?:^|\s)(?:\w|:)\w{2,}$/);
+        const shouldComplete = completeAnyRegex.test.bind(completeAnyRegex);
 
         // Show possible completions
         let renderCompletions = _.debounce(function () {
