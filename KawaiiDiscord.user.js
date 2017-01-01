@@ -20,7 +20,6 @@
     // Emote data
     var EmoteSet = function () {
         this.emoteMap = new Map();
-        this.rollTables = new Map();
         this.template = "";
         this.caseSensitive = true;
         this.rolls = false;
@@ -41,16 +40,25 @@
         if (!this.caseSensitive) {
             emoteName = emoteName.toLowerCase();
         }
-        if (this.rolls && emoteName.endsWith("#")) {
-            var prefix = emoteName.slice(0, -1);
-            var table = this.rollTables.get(prefix);
-            if (table === undefined) {
-                return undefined;
-            }
-            if (seed === undefined || seed === 0) {
-                emoteName = this.rollDefault;
-            } else {
-                emoteName = table[seed % table.length];
+        if (this.rolls) {
+            const options = {
+                start: !emoteName.startsWith("*"),
+                end: !emoteName.endsWith("*") && !emoteName.endsWith("#"),
+                numeric: emoteName.endsWith("#"),
+            };
+            if (!options.start || !options.end) {
+                const startPos = options.start ? 0 : 1;
+                const endPos = options.end ? emoteName.length : -1;
+                const query = emoteName.slice(startPos, endPos);
+                var table = this.search(query, options).sort();
+                if (table.length === 0) {
+                    return undefined;
+                }
+                if (seed === undefined || seed === 0) {
+                    emoteName = this.rollDefault;
+                } else {
+                    emoteName = table[seed % table.length][0];
+                }
             }
         }
         var path = this.emoteMap.get(emoteName);
@@ -87,19 +95,22 @@
         });
         return emote;
     };
-    EmoteSet.prototype.search = function (query) {
-        const score = function (name, query) {
-            name = name.toLowerCase();
-            query = query.toLowerCase();
+    EmoteSet.prototype.search = function (query, {start=false, end=false, numeric=false} = {}) {
+        const prefix = start ? "^" : "";
+        const suffix = end ? "$" : numeric ? "\\d*$" : "";
+        const queryExp = new RegExp(prefix + _.escapeRegExp(query) + suffix, "i");
+
+        const score = function (name) {
             const d = name.length - query.length;
-            const i = name.indexOf(query);
-            if (i === -1) {
+            const res = queryExp.exec(name);
+            if (res === null) {
                 return 0;
             }
+            const i = res.index;
             return 1 + (i+1)*(d-i+2);
         };
         return [...this.emoteMap.keys()]
-            .map(e => [e, score(e, query)])
+            .map(e => [e, score(e)])
             .filter(e => e[1] !== 0);
     };
 
@@ -519,19 +530,7 @@
                     var fixName = emote.name.toLowerCase();
                     self.emoteMap.set(fixName, emote.url);
                     loaded++;
-                    // Build roll tables
-                    var prefix = /^(.*\D)?\d*$/.exec(fixName)[1];
-                    if (prefix !== undefined) {
-                        var table = self.rollTables.get(prefix);
-                        if (table === undefined) {
-                            table = [];
-                            self.rollTables.set(prefix, table);
-                        }
-                        table.push(fixName);
-                    }
                 });
-                // Original data may come in unsorted, so sort here to ensure consistency
-                self.rollTables.forEach(function(v) {v.sort();});
                 console.info("KawaiiDiscord:", "SFMLab emotes loaded:", loaded, "skipped:", skipped);
                 callbacks.success(self);
             },
