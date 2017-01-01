@@ -114,39 +114,14 @@
             .filter(e => e[1] !== 0);
     };
 
-    const completeAnyRegex = /(^|\s)((?:\w|:)\w{2,})$/;
-    const completeStandardRegex = /(^|\s):(\w{2,})$/;
-    const completeTwitchRegex = /(^|\s)(\w{3,})$/;
-
-    function getCompletionsStandard(emoteSets, text) {
-        const match = text.match(completeStandardRegex);
-        if (match === null) {
-            return {completions: [], matchText: null, matchStart: -1};
-        }
-
-        const completions = emoteSets
-            .filter(s => s.emoteStyle === EmoteSet.emoteStyle.STANDARD)
-            .map(s => s.search(match[2]).map(e => [[":"+e[0]+":", s.createEmote.bind(s, e[0])], e[1]]))
-            .reduce((a,b) => a.concat(b), []);
-        const matchText = ":"+match[2], matchStart = match.index + match[1].length;
-
-        return {completions, matchText, matchStart};
-    }
-
-    function getCompletionsTwitch(emoteSets, text) {
-        const match = text.match(completeTwitchRegex);
-        if (match === null) {
-            return {completions: [], matchText: null, matchStart: -1};
-        }
-
-        const completions = emoteSets
-            .filter(s => s.emoteStyle === EmoteSet.emoteStyle.TWITCH)
-            .map(s => s.search(match[2]).map(e => [[e[0], s.createEmote.bind(s, e[0])], e[1]]))
-            .reduce((a,b) => a.concat(b), []);
-        const matchText = match[2], matchStart = match.index + match[1].length;
-
-        return {completions, matchText, matchStart};
-    }
+    // Regex breakdown:
+    // $1 - /(^|\s)/ - Starting from the beginning of the string, or following any whitespace
+    //    - /(?!.{0,2}$)/ - not shorter than 3 characters
+    // $2 - /(:?)/ - the initial colon in standard emotes
+    // $3 - /(([*])?(\w+)([*#])?)/ - emote text ($5), optionally preceded ($4) or followed ($6) by wildcards
+    const completeAnyRegex = /(^|\s)(?!.{0,2}$)(:?)(([*])?(\w+)([*#])?)$/;
+    const completeStandardRegex = /(^|\s)(?!.{0,2}$):(([*])?(\w+)([*#])?)$/;
+    const completeTwitchRegex = /(^|\s)(?!.{0,2}$)(([*])?(\w+)([*#])?)$/;
 
     const emoteComparator = (function () {
         const compare = new Intl.Collator(undefined, {
@@ -159,14 +134,33 @@
     })();
 
     function getCompletions(emoteSets, text) {
-        let {completions, matchText, matchStart} = getCompletionsStandard(emoteSets, text);
-        if (matchStart === -1) {
-            ({completions, matchText, matchStart} = getCompletionsTwitch(emoteSets, text));
+        const match = completeAnyRegex.exec(text);
+        if (match === null) {
+            return {completions: [], matchText: null, matchStart: -1};
         }
+        // If emote begins with a colon, use "standard" sets; otherwise, use "twitch" sets
+        const emoteStyle = (match[2] === ":") ? EmoteSet.emoteStyle.STANDARD : EmoteSet.emoteStyle.TWITCH;
 
-        completions = completions
+        // If this is a "roll", only use sets allowing them and search based on wildcards
+        // otherwise, search for matches normally
+        const rolling = match[4] !== undefined || match[6] !== undefined;
+
+        // Prepare search options
+        const options = {
+            start: rolling && match[4] === undefined,
+            end: rolling && match[6] === undefined,
+            numeric: rolling && match[6] === "#",
+        };
+
+        const completions = emoteSets
+            .filter(s => s.emoteStyle === emoteStyle)
+            .filter(s => s.rolls || !rolling)
+            .map(s => s.search(match[5], options).map(e => [[":"+e[0]+":", s.createEmote.bind(s, e[0])], e[1]]))
+            .reduce((a,b) => a.concat(b), [])
             .sort(emoteComparator)
             .map(e => e[0]);
+
+        const matchText = match[2]+match[3], matchStart = match.index + match[1].length;
 
         return {completions, matchText, matchStart};
     }
