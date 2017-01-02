@@ -155,7 +155,7 @@
         const completions = emoteSets
             .filter(s => s.emoteStyle === emoteStyle)
             .filter(s => s.rolls || !rolling)
-            .map(s => s.search(match[5], options).map(e => [[":"+e[0]+":", s.createEmote.bind(s, e[0])], e[1]]))
+            .map(s => s.search(match[5], options).map(e => [[match[2]+e[0]+match[2], s.createEmote.bind(s, e[0])], e[1]]))
             .reduce((a,b) => a.concat(b), [])
             .sort(emoteComparator)
             .map(e => e[0]);
