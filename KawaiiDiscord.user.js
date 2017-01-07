@@ -24,6 +24,7 @@
         this.caseSensitive = true;
         this.rolls = false;
         this.emoteStyle = EmoteSet.emoteStyle.STANDARD;
+        this.getRollTable = _.memoize(this.getRollTable);
     };
     // emoteStyle enum
     EmoteSet.emoteStyle = {
@@ -36,28 +37,25 @@
         SIZE: 1, // emote size, usually a single digit between 1 and 4
     };
     EmoteSet.prototype.load = $.noop;
+    const rollRegex = /^([*])?(\w*)([*#])?$/;
     EmoteSet.prototype.getUrl = function (emoteName, seed) {
         if (!this.caseSensitive) {
             emoteName = emoteName.toLowerCase();
         }
         if (this.rolls) {
-            const options = {
-                start: !emoteName.startsWith("*"),
-                end: !emoteName.endsWith("*") && !emoteName.endsWith("#"),
-                numeric: emoteName.endsWith("#"),
-            };
-            if (!options.start || !options.end) {
-                const startPos = options.start ? 0 : 1;
-                const endPos = options.end ? emoteName.length : -1;
-                const query = emoteName.slice(startPos, endPos);
-                var table = this.search(query, options).sort();
+            const match = rollRegex.exec(emoteName);
+            if (match === null) {
+                return undefined;
+            }
+            if (match[1] !== undefined || match[3] !== undefined) {
+                const table = this.getRollTable(emoteName);
                 if (table.length === 0) {
                     return undefined;
                 }
                 if (seed === undefined || seed === 0) {
                     emoteName = this.rollDefault;
                 } else {
-                    emoteName = table[seed % table.length][0];
+                    emoteName = table[seed % table.length];
                 }
             }
         }
@@ -94,6 +92,17 @@
             class: "emoji kawaii-parseemotes",
         });
         return emote;
+    };
+    EmoteSet.prototype.getRollTable = function (emoteName) {
+        const match = rollRegex.exec(emoteName);
+        const options = {
+            start: match[1] === undefined,
+            end: match[3] === undefined,
+            numeric: match[3] === "#",
+        };
+        return this.search(match[2], options)
+            .map(e => e[0])
+            .sort();
     };
     EmoteSet.prototype.search = function (query, {start=false, end=false, numeric=false} = {}) {
         const prefix = start ? "^" : "";
@@ -529,6 +538,7 @@
                     self.emoteMap.set(fixName, emote.url);
                     loaded++;
                 });
+                self.getRollTable.cache = new Map();
                 console.info("KawaiiDiscord:", "SFMLab emotes loaded:", loaded, "skipped:", skipped);
                 callbacks.success(self);
             },
