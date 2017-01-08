@@ -600,7 +600,7 @@ var kawaii = function () {};
     };
 
     kawaii.prototype.getVersion = function () {
-        return "0.7.6";
+        return "0.7.7";
     };
 
     kawaii.prototype.getAuthor = function () {
