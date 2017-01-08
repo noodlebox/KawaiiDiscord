@@ -512,9 +512,9 @@
         });
     };
 
-    // SFMLab emotes, now with more rolling than ever!
+    // Smutbase emotes, now with more rolling than ever!
     var sfmlabEmotes = new EmoteSet();
-    sfmlabEmotes.template = "https://sfmlab.com/static/emoji/img/{0}";
+    sfmlabEmotes.template = "https://smutba.se/media/emoji/{0}";
     sfmlabEmotes.caseSensitive = false;
     sfmlabEmotes.rolls = true;
     sfmlabEmotes.rollDefault = "mikeroll";
@@ -525,7 +525,7 @@
             error: $.noop,
         }, callbacks);
         var self = this;
-        $.ajax("https://sfmlab.com/emoji_json/", {
+        $.ajax("https://smutba.se/emoji/json/", {
             dataType: "json",
             jsonp: false,
             cache: true,
@@ -539,11 +539,11 @@
                     loaded++;
                 });
                 self.getRollTable.cache = new Map();
-                console.info("KawaiiDiscord:", "SFMLab emotes loaded:", loaded, "skipped:", skipped);
+                console.info("KawaiiDiscord:", "Smutbase emotes loaded:", loaded, "skipped:", skipped);
                 callbacks.success(self);
             },
             error: function (xhr, textStatus, errorThrown) {
-                console.warn("KawaiiDiscord:", "Twitch subscriber emotes failed to load:", textStatus, "error:", errorThrown);
+                console.warn("KawaiiDiscord:", "Smutbase emotes failed to load:", textStatus, "error:", errorThrown);
                 callbacks.error(self);
             }
         });
