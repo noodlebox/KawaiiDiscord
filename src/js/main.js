@@ -306,7 +306,7 @@ function processMutation(mutation, observer) {
     const atBottom = messagesContainer.scrollBottom() < 0.5;
 
     // Process messages
-    messages.parseEmotes([sfmlabEmotes, twitchEmotes, twitchSubEmotes])
+    messages.parseEmotes([smutbaseEmotes, twitchEmotes, twitchSubEmotes])
         .find(".kawaii-parseemotes").fancyTooltip();
 
     // Clean up any remaining tooltips
@@ -348,7 +348,7 @@ function parseEmoteSet() {
 }
 
 import {twitchEmotes, twitchSubEmotes} from "./emoteset/twitch";
-import {sfmlabEmotes} from "./emoteset/sfmlab";
+import {smutbaseEmotes} from "./emoteset/smutbase";
 
 export default function KawaiiDiscord() {}
 
@@ -358,12 +358,12 @@ KawaiiDiscord.prototype.unload = function () {};
 
 KawaiiDiscord.prototype.start = function () {
     // Load the emote sets if necessary, and parse the document as they load
-    twitchEmotes.load({success: parseEmoteSet});
+    twitchEmotes.load().then(parseEmoteSet);
     // Hold off on loading this set by default until we add a settings panel
-    //twitchSubEmotes.load({success: parseEmoteSet});
-    sfmlabEmotes.load({success: parseEmoteSet});
+    //twitchSubEmotes.load().then(parseEmoteSet);
+    smutbaseEmotes.load().then(parseEmoteSet);
 
-    Completion.start([sfmlabEmotes, twitchEmotes, twitchSubEmotes]);
+    Completion.start([smutbaseEmotes, twitchEmotes, twitchSubEmotes]);
 
     startObserver(chat_observer);
 };

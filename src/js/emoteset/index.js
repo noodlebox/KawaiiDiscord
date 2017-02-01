@@ -1,2 +1,1 @@
-import EmoteSet from "./emoteset";
-export default EmoteSet;
+export { default } from "./emoteset";
