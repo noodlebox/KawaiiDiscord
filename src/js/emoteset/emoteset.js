@@ -9,12 +9,13 @@ export default class EmoteSet {
         label,
         template,
         caseSensitive = true,
+        sizes,
         rolls = false,
         rollDefault,
         emoteStyle = EmoteSet.emoteStyle.STANDARD,
         loader = () => {},
     } = {}) {
-        Object.assign(this, {label, template, caseSensitive, rolls, rollDefault, emoteStyle, loader});
+        Object.assign(this, {label, template, caseSensitive, sizes, rolls, rollDefault, emoteStyle, loader});
 
         this.getRollTable = _.memoize(this.getRollTable);
         this.emoteMap = new Map();
@@ -121,7 +122,7 @@ const Emote = EmoteSet.Emote = class Emote {
         Object.assign(this, {name, path, emoteSet});
     }
 
-    get src() {
+    getUrl({size="1"} = {}) {
         if (!this.emoteSet || !this.emoteSet.template) {
             return this.path;
         }
@@ -130,16 +131,30 @@ const Emote = EmoteSet.Emote = class Emote {
                 case EmoteSet.templateField.PATH:
                     return this.path;
                 case EmoteSet.templateField.SIZE:
-                    return "1";
+                    return size;
                 default:
                     return match;
             }
         });
     }
 
+    get src() {
+        return this.getUrl();
+    }
+
+    get srcSet() {
+        if (!this.emoteSet || !this.emoteSet.sizes) {
+            return null;
+        }
+        return this.emoteSet.sizes
+            .map(([density, size]) => {
+                return this.getUrl({size}) + " " + density;
+            })
+            .join(",");
+    }
+
     // Create and return an emote element
     render(emoteName) {
-        var emoteURL = this.src;
         if (!emoteName) {
             emoteName = this.name;
         }
@@ -148,7 +163,8 @@ const Emote = EmoteSet.Emote = class Emote {
         }
         // TODO: Apply special style to rolled emotes
         var emote = $("<img>", {
-            src: emoteURL,
+            src: this.src,
+            srcSet: this.srcSet,
             draggable: "false",
             alt: emoteName,
             title: emoteName,

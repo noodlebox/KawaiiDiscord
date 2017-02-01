@@ -15,6 +15,7 @@ function emoteFilter(name) {
 export const twitchEmotes = new EmoteSet({
     label: "Twitch global emotes",
     template: "https://static-cdn.jtvnw.net/emoticons/v1/{0}/{1}.0",
+    sizes: [["2x", "2"], ["4x", "3"]],
     emoteStyle: EmoteSet.emoteStyle.TWITCH,
     loader() {
         return new Promise((resolve, reject) => {
@@ -54,6 +55,7 @@ export const twitchEmotes = new EmoteSet({
 export const twitchSubEmotes = new EmoteSet({
     label: "Twitch subscriber emotes",
     template: "https://static-cdn.jtvnw.net/emoticons/v1/{0}/{1}.0",
+    sizes: [["2x", "2"], ["4x", "3"]],
     emoteStyle: EmoteSet.emoteStyle.TWITCH,
     loader() {
         return new Promise((resolve, reject) => {
