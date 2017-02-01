@@ -35,7 +35,7 @@ export default class EmoteSet {
         return loaded;
     }
 
-    getUrl(emoteName, seed) {
+    getEmote(emoteName, seed) {
         if (!this.caseSensitive) {
             emoteName = emoteName.toLowerCase();
         }
@@ -56,40 +56,16 @@ export default class EmoteSet {
                 }
             }
         }
-        var path = this.emoteMap.get(emoteName);
-        if (path === undefined) {
-            return undefined;
-        }
-        return this.template.replace(/{(\d+)}/g, function (match, field) {
-            switch (Number(field)) {
-                case EmoteSet.templateField.PATH:
-                    return path;
-                case EmoteSet.templateField.SIZE:
-                    return "1";
-                default:
-                    return match;
-            }
-        });
+        return this.emoteMap.get(emoteName);
     }
 
     // Create and return an emote element, or undefined if no match found
     createEmote(emoteName, seed) {
-        var emoteURL = this.getUrl(emoteName, seed);
-        if (emoteURL === undefined) {
+        var emote = this.getEmote(emoteName, seed);
+        if (emote === undefined) {
             return undefined;
         }
-        if (this.emoteStyle === EmoteSet.emoteStyle.STANDARD) {
-            emoteName = ":"+emoteName+":";
-        }
-        // TODO: Apply special style to rolled emotes
-        var emote = $("<img>", {
-            src: emoteURL,
-            draggable: "false",
-            alt: emoteName,
-            title: emoteName,
-            class: "emoji kawaii-parseemotes",
-        });
-        return emote;
+        return emote.render(emoteName);
     }
 
     getRollTable(emoteName) {
@@ -136,5 +112,48 @@ EmoteSet.templateField = {
     SIZE: 1, // emote size, usually a single digit between 1 and 4
 };
 
+const Emote = EmoteSet.Emote = class Emote {
+    constructor({
+        name,
+        path,
+        emoteSet = null,
+    } = {}) {
+        Object.assign(this, {name, path, emoteSet});
+    }
 
+    get src() {
+        if (!this.emoteSet || !this.emoteSet.template) {
+            return this.path;
+        }
+        return this.emoteSet.template.replace(/{(\d+)}/g, (match, field) => {
+            switch (Number(field)) {
+                case EmoteSet.templateField.PATH:
+                    return this.path;
+                case EmoteSet.templateField.SIZE:
+                    return "1";
+                default:
+                    return match;
+            }
+        });
+    }
 
+    // Create and return an emote element
+    render(emoteName) {
+        var emoteURL = this.src;
+        if (!emoteName) {
+            emoteName = this.name;
+        }
+        if (this.emoteSet.emoteStyle === EmoteSet.emoteStyle.STANDARD) {
+            emoteName = ":"+emoteName+":";
+        }
+        // TODO: Apply special style to rolled emotes
+        var emote = $("<img>", {
+            src: emoteURL,
+            draggable: "false",
+            alt: emoteName,
+            title: emoteName,
+            class: "emoji kawaii-parseemotes",
+        });
+        return emote;
+    }
+};

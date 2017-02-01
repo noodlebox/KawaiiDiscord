@@ -18,9 +18,13 @@ export const smutbaseEmotes = new EmoteSet({
                     const newData = {loaded: 0, skipped: 0};
                     newData.template = data.template;
                     newData.emoteMap = new Map();
-                    data.emotes.forEach(function (emote) {
+                    data.emotes.forEach(emote => {
                         const fixName = emote.name.toLowerCase();
-                        newData.emoteMap.set(fixName, emote.url);
+                        newData.emoteMap.set(fixName, new EmoteSet.Emote({
+                            name: emote.name,
+                            path: emote.url,
+                            emoteSet: this,
+                        }));
                         newData.loaded++;
                     });
                     newData.getRollTable = _.memoize(EmoteSet.prototype.getRollTable);

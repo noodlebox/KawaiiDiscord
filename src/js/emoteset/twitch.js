@@ -29,9 +29,13 @@ export const twitchEmotes = new EmoteSet({
                 .done(data => {
                     const newData = {loaded: 0, skipped: 0};
                     newData.emoteMap = new Map();
-                    data.emoticon_sets[0].forEach(function (emoticon) {
+                    data.emoticon_sets[0].forEach(emoticon => {
                         if (emoteFilter(emoticon.code)) {
-                            newData.emoteMap.set(emoticon.code, emoticon.id);
+                            newData.emoteMap.set(emoticon.code, new EmoteSet.Emote({
+                                name: emoticon.code,
+                                path: emoticon.id,
+                                emoteSet: this,
+                            }));
                             newData.loaded++;
                         } else {
                             newData.skipped++;
@@ -64,9 +68,13 @@ export const twitchSubEmotes = new EmoteSet({
                 .done(data => {
                     const newData = {loaded: 0, skipped: 0};
                     newData.emoteMap = new Map();
-                    data.emoticons.forEach(function (emoticon) {
+                    data.emoticons.forEach(emoticon => {
                         if (emoticon.emoticon_set !== null && emoteFilter(emoticon.code)) {
-                            newData.emoteMap.set(emoticon.code, emoticon.id);
+                            newData.emoteMap.set(emoticon.code, new EmoteSet.Emote({
+                                name: emoticon.code,
+                                path: emoticon.id,
+                                emoteSet: this,
+                            }));
                             newData.loaded++;
                         } else {
                             newData.skipped++;
