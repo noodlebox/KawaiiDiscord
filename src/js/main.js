@@ -350,25 +350,36 @@ function parseEmoteSet() {
 import {twitchEmotes, twitchSubEmotes} from "./emoteset/twitch";
 import {smutbaseEmotes} from "./emoteset/smutbase";
 
+function loadEmoteSets() {
+    // Load the emote sets if necessary, and parse the document as they load
+    twitchEmotes.load().then(parseEmoteSet);
+    // Hold off on loading this set by default until we add a settings panel
+    //twitchSubEmotes.load().then(parseEmoteSet);
+    smutbaseEmotes.load().then(parseEmoteSet);
+}
+
 export default function KawaiiDiscord() {}
 
 KawaiiDiscord.prototype.load = function () {};
 
 KawaiiDiscord.prototype.unload = function () {};
 
+var updateRate = 2*60*60*1000;
+var updateIntervalID;
+
 KawaiiDiscord.prototype.start = function () {
-    // Load the emote sets if necessary, and parse the document as they load
-    twitchEmotes.load().then(parseEmoteSet);
-    // Hold off on loading this set by default until we add a settings panel
-    //twitchSubEmotes.load().then(parseEmoteSet);
-    smutbaseEmotes.load().then(parseEmoteSet);
+    loadEmoteSets();
 
     Completion.start([smutbaseEmotes, twitchEmotes, twitchSubEmotes]);
 
     startObserver(chat_observer);
+
+    updateIntervalID = setInterval(loadEmoteSets, 2*60*60*1000);
 };
 
 KawaiiDiscord.prototype.stop = function () {
+    clearInterval(updateIntervalID);
+
     stopObserver(chat_observer);
 
     Completion.stop();
