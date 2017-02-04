@@ -253,9 +253,12 @@ $.fn.fancyTooltip = function () {
             $(".tooltips").append(tooltip);
 
             // Position the tooltip
-            var position = $(this).offset();
-            position.top -= 30;
-            position.left += $(this).width()/2 - tooltip.width()/2 - 10;
+            var tooltipRect = tooltip[0].getBoundingClientRect();
+            var targetRect = this.getBoundingClientRect();
+            var position = {
+                top: targetRect.top - tooltipRect.height - 8,
+                left: targetRect.left + targetRect.width/2 - tooltipRect.width/2,
+            }
             tooltip.offset(position);
 
             // Set a handler to destroy the tooltip
