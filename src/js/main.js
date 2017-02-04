@@ -309,7 +309,7 @@ function processMutation(mutation, observer) {
     const atBottom = messagesContainer.scrollBottom() < 0.5;
 
     // Process messages
-    messages.parseEmotes([sfmlabEmotes, twitchEmotes, twitchSubEmotes])
+    messages.parseEmotes([smutbaseEmotes, twitchEmotes, twitchSubEmotes])
         .find(".kawaii-parseemotes").fancyTooltip();
 
     // Clean up any remaining tooltips
@@ -351,7 +351,15 @@ function parseEmoteSet() {
 }
 
 import {twitchEmotes, twitchSubEmotes} from "./emoteset/twitch";
-import {sfmlabEmotes} from "./emoteset/sfmlab";
+import {smutbaseEmotes} from "./emoteset/smutbase";
+
+function loadEmoteSets() {
+    // Load the emote sets if necessary, and parse the document as they load
+    twitchEmotes.load().then(parseEmoteSet);
+    // Hold off on loading this set by default until we add a settings panel
+    //twitchSubEmotes.load().then(parseEmoteSet);
+    smutbaseEmotes.load().then(parseEmoteSet);
+}
 
 export default function KawaiiDiscord() {}
 
@@ -359,19 +367,22 @@ KawaiiDiscord.prototype.load = function () {};
 
 KawaiiDiscord.prototype.unload = function () {};
 
-KawaiiDiscord.prototype.start = function () {
-    // Load the emote sets if necessary, and parse the document as they load
-    twitchEmotes.load({success: parseEmoteSet});
-    // Hold off on loading this set by default until we add a settings panel
-    //twitchSubEmotes.load({success: parseEmoteSet});
-    sfmlabEmotes.load({success: parseEmoteSet});
+var updateRate = 2*60*60*1000;
+var updateIntervalID;
 
-    Completion.start([sfmlabEmotes, twitchEmotes, twitchSubEmotes]);
+KawaiiDiscord.prototype.start = function () {
+    loadEmoteSets();
+
+    Completion.start([smutbaseEmotes, twitchEmotes, twitchSubEmotes]);
 
     startObserver(chat_observer);
+
+    updateIntervalID = setInterval(loadEmoteSets, 2*60*60*1000);
 };
 
 KawaiiDiscord.prototype.stop = function () {
+    clearInterval(updateIntervalID);
+
     stopObserver(chat_observer);
 
     Completion.stop();

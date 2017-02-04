@@ -12,77 +12,81 @@ function emoteFilter(name) {
 }
 
 // Global Twitch emotes (emoteset 0), filtered by emoteFilter
-export const twitchEmotes = new EmoteSet();
-twitchEmotes.template = "https://static-cdn.jtvnw.net/emoticons/v1/{0}/{1}.0";
-twitchEmotes.emoteStyle = EmoteSet.emoteStyle.TWITCH;
-twitchEmotes.load = function (callbacks) {
-    callbacks = $.extend({
-        success: $.noop,
-        error: $.noop,
-    }, callbacks);
-    var self = this;
-    // See: https://github.com/justintv/Twitch-API/blob/master/v3_resources/chat.md#get-chatemoticons
-    $.ajax("https://api.twitch.tv/kraken/chat/emoticon_images?emotesets=0", {
-        accepts: {json: "application/vnd.twitchtv.v3+json"},
-        headers: {'Client-ID': 'a7pwjx1l6tr0ygjrzafhznzd4zgg9md'},
-        dataType: "json",
-        jsonp: false,
-        cache: true,
-        success: function (data) {
-            var loaded = 0;
-            var skipped = 0;
-            data.emoticon_sets[0].forEach(function (emoticon) {
-                if (emoteFilter(emoticon.code)) {
-                    self.emoteMap.set(emoticon.code, emoticon.id);
-                    loaded++;
-                } else {
-                    skipped++;
-                }
-            });
-            console.info("KawaiiDiscord:", "Twitch global emotes loaded:", loaded, "skipped:", skipped);
-            callbacks.success(self);
-        },
-        error: function (xhr, textStatus, errorThrown) {
-            console.warn("KawaiiDiscord:", "Twitch global emotes failed to load:", textStatus, "error:", errorThrown);
-            callbacks.error(self);
-        }
-    });
-};
+export const twitchEmotes = new EmoteSet({
+    label: "Twitch global emotes",
+    template: "https://static-cdn.jtvnw.net/emoticons/v1/{0}/{1}.0",
+    sizes: [["2x", "2"], ["4x", "3"]],
+    emoteStyle: EmoteSet.emoteStyle.TWITCH,
+    loader() {
+        return new Promise((resolve, reject) => {
+            // See: https://github.com/justintv/Twitch-API/blob/master/v3_resources/chat.md#get-chatemoticons
+            $.ajax("https://api.twitch.tv/kraken/chat/emoticon_images?emotesets=0", {
+                accepts: {json: "application/vnd.twitchtv.v3+json"},
+                headers: {'Client-ID': 'a7pwjx1l6tr0ygjrzafhznzd4zgg9md'},
+                dataType: "json",
+                jsonp: false,
+                cache: true,
+            })
+                .done(data => {
+                    const newData = {loaded: 0, skipped: 0};
+                    newData.emoteMap = new Map();
+                    data.emoticon_sets[0].forEach(emoticon => {
+                        if (emoteFilter(emoticon.code)) {
+                            newData.emoteMap.set(emoticon.code, new EmoteSet.Emote({
+                                name: emoticon.code,
+                                path: emoticon.id,
+                                emoteSet: this,
+                            }));
+                            newData.loaded++;
+                        } else {
+                            newData.skipped++;
+                        }
+                    });
+                    resolve(newData);
+                })
+                .fail((xhr, textStatus, errorThrown) => {
+                    reject(new Error(`${textStatus}, error: ${errorThrown}`));
+                });
+        });
+    },
+});
 
 // Twitch subscriber emotes, filtered by emoteFilter
-export const twitchSubEmotes = new EmoteSet();
-twitchSubEmotes.template = "https://static-cdn.jtvnw.net/emoticons/v1/{0}/{1}.0";
-twitchSubEmotes.emoteStyle = EmoteSet.emoteStyle.TWITCH;
-twitchSubEmotes.load = function (callbacks) {
-    callbacks = $.extend({
-        success: $.noop,
-        error: $.noop,
-    }, callbacks);
-    var self = this;
-    // See: https://github.com/justintv/Twitch-API/blob/master/v3_resources/chat.md#get-chatemoticons
-    $.ajax("https://api.twitch.tv/kraken/chat/emoticon_images", {
-        accepts: {json: "application/vnd.twitchtv.v3+json"},
-        headers: {'Client-ID': 'a7pwjx1l6tr0ygjrzafhznzd4zgg9md'},
-        dataType: "json",
-        jsonp: false,
-        cache: true,
-        success: function (data) {
-            var loaded = 0;
-            var skipped = 0;
-            data.emoticons.forEach(function (emoticon) {
-                if (emoticon.emoticon_set !== null && emoteFilter(emoticon.code)) {
-                    self.emoteMap.set(emoticon.code, emoticon.id);
-                    loaded++;
-                } else {
-                    skipped++;
-                }
-            });
-            console.info("KawaiiDiscord:", "Twitch subscriber emotes loaded:", loaded, "skipped:", skipped);
-            callbacks.success(self);
-        },
-        error: function (xhr, textStatus, errorThrown) {
-            console.warn("KawaiiDiscord:", "Twitch subscriber emotes failed to load:", textStatus, "error:", errorThrown);
-            callbacks.error(self);
-        }
-    });
-};
+export const twitchSubEmotes = new EmoteSet({
+    label: "Twitch subscriber emotes",
+    template: "https://static-cdn.jtvnw.net/emoticons/v1/{0}/{1}.0",
+    sizes: [["2x", "2"], ["4x", "3"]],
+    emoteStyle: EmoteSet.emoteStyle.TWITCH,
+    loader() {
+        return new Promise((resolve, reject) => {
+            // See: https://github.com/justintv/Twitch-API/blob/master/v3_resources/chat.md#get-chatemoticons
+            $.ajax("https://api.twitch.tv/kraken/chat/emoticon_images", {
+                accepts: {json: "application/vnd.twitchtv.v3+json"},
+                headers: {'Client-ID': 'a7pwjx1l6tr0ygjrzafhznzd4zgg9md'},
+                dataType: "json",
+                jsonp: false,
+                cache: true,
+            })
+                .done(data => {
+                    const newData = {loaded: 0, skipped: 0};
+                    newData.emoteMap = new Map();
+                    data.emoticons.forEach(emoticon => {
+                        if (emoticon.emoticon_set !== null && emoteFilter(emoticon.code)) {
+                            newData.emoteMap.set(emoticon.code, new EmoteSet.Emote({
+                                name: emoticon.code,
+                                path: emoticon.id,
+                                emoteSet: this,
+                            }));
+                            newData.loaded++;
+                        } else {
+                            newData.skipped++;
+                        }
+                    });
+                    resolve(newData);
+                })
+                .fail((xhr, textStatus, errorThrown) => {
+                    reject(new Error(`${textStatus}, error: ${errorThrown}`));
+                });
+        });
+    },
+});
