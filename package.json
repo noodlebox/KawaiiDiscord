@@ -1,0 +1,44 @@
+{
+  "name": "KawaiiDiscord",
+  "author": "noodlebox",
+  "version": "0.10.0-pre",
+  "description": "Add large sets of external emotes to Discord.",
+  "license": "MIT",
+  "repository": "noodlebox/KawaiiDiscord",
+  "homepage": "https://github.com/noodlebox/KawaiiDiscord",
+  "bugs": "https://github.com/noodlebox/KawaiiDiscord/issues",
+  "userscript": {
+    "name": "{{{pkg.name}}}",
+    "namespace": "https://files.noodlebox.moe/",
+    "downloadURL": "https://files.noodlebox.moe/userscripts/{{{pkg.name}}}.user.js",
+    "version": "{{{pkg.version}}}",
+    "description": "{{{pkg.description}}}",
+    "author": "{{{pkg.author}}}",
+    "homepage": "{{{pkg.homepage}}}",
+    "supportURL": "{{{pkg.bugs}}}",
+    "match": [
+      "*://*.discordapp.com/channels/*",
+      "*://*.discordapp.com/invite/*",
+      "*://*.discordapp.com/login"
+    ],
+    "run-at": "document-idle",
+    "grant": "none"
+  },
+  "devDependencies": {
+    "babel-plugin-lodash": "^3.2.11",
+    "babel-preset-es2015": "^6.18.0",
+    "babelify": "^7.3.0",
+    "browserify": "^13.1.1",
+    "generate-userscript-header": "^1.0.0",
+    "gulp": "^3.9.1",
+    "gulp-footer": "^1.0.5",
+    "gulp-header": "^1.8.8",
+    "gulp-rename": "^1.2.2",
+    "gulp-uglify": "^2.0.0",
+    "jquery": "^3",
+    "lodash": "^4",
+    "strictify": "^0.2.0",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0"
+  }
+}
