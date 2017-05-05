@@ -187,6 +187,8 @@ Completion.start = function (emoteSets) {
 
         textarea.value = left + right;
         textarea.selectionStart = textarea.selectionEnd = left.length;
+        // Ensure React accounts for the newly inserted text
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
 
         destroyCompletions();
     }
