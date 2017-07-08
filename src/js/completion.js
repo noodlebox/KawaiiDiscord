@@ -5,10 +5,12 @@ import EmoteSet from "./emoteset";
 
 // Regex breakdown:
 // $1 - /(^|\s)/ - Starting from the beginning of the string, or following any whitespace
+//    - /(?!$)/ - not shorter than 1 character
 //    - /(?!.{0,2}$)/ - not shorter than 3 characters
 // $2 - /(:?)/ - the initial colon in standard emotes
 // $3 - /(([*])?(\w+)([*#])?)/ - emote text ($5), optionally preceded ($4) or followed ($6) by wildcards
-const completeAnyRegex = /(^|\s)(?!.{0,2}$)(:?)(([*])?(\w+)([*#])?)$/;
+const shouldInterceptRegex = /(^|\s)(?!$)(:?)(([*])?(\w*)([*#])?)$/;
+const completeAnyRegex = /(^|\s)(?!.{0,2}$)(:?)(([*])?(\w*)([*#])?)$/;
 const completeStandardRegex = /(^|\s)(?!.{0,2}$):(([*])?(\w+)([*#])?)$/;
 const completeTwitchRegex = /(^|\s)(?!.{0,2}$)(([*])?(\w+)([*#])?)$/;
 
@@ -60,6 +62,8 @@ const shouldCompleteTwitch = completeTwitchRegex.test.bind(completeTwitchRegex);
 
 const shouldComplete = completeAnyRegex.test.bind(completeAnyRegex);
 
+const shouldIntercept = shouldInterceptRegex.test.bind(shouldInterceptRegex);
+
 const Completion = {};
 
 export default Completion;
@@ -76,7 +80,7 @@ Completion.start = function (emoteSets) {
 
     // Show possible completions
     let renderCompletions = _.debounce(function () {
-        const channelTextarea = $(textarea).closest(".channel-textarea");
+        const channelTextarea = $(textarea).closest(".channelTextArea-1HTP3C > .inner-3if5cm");
         const oldAutocomplete = channelTextarea.children(".kawaii-autocomplete");
 
         const candidateText = textarea.value.slice(0, textarea.selectionEnd);
@@ -89,35 +93,40 @@ Completion.start = function (emoteSets) {
 
         const matchList = completions.slice(firstIndex, firstIndex+windowSize);
 
-        const autocomplete = $("<div>", {
-            "class": "channel-textarea-autocomplete kawaii-autocomplete",
-            css: {display: "block"},
-        });
-        const autocompleteInner = $("<div>", {"class": "channel-textarea-autocomplete-inner"})
-            .on("wheel.kawaii-complete", e => scrollCompletions(e, {locked: true}))
+        const autocomplete = $("<div>")
+            .addClass("autocomplete-1TnWNR autocomplete-1LLKUa kawaii-autocomplete")
+            .on("wheel.kawaii-complete", e => scrollCompletions(e, {locked: true}));
+        // FIXME: clean up this mess of jQuery
+        $("<div>", {"class": "autocompleteRowVertical-3_UxVA autocompleteRow-31UJBI"})
+            .append($("<div>", {"class": "selector-nbyEfM"})
+                .append($("<div>", {text: "Emotes matching "}).append($("<strong>", {text: matchText}))
+                    .addClass("contentTitle-sL6DrN primary400-1OkqpL weightBold-2qbcng")))
             .appendTo(autocomplete);
-        $("<header>")
-            .append($("<div>", {text: "Emotes matching "}).append($("<strong>", {text: matchText})))
-            .appendTo(autocompleteInner);
-        $("<ul>")
+        autocomplete
             .append(matchList.map((e,i) => {
-                let li = $("<li>", {text: e[0]}).prepend(e[1]());
+                let row = $("<div>", {"class": "autocompleteRowVertical-3_UxVA autocompleteRow-31UJBI"});
+                let selector = $("<div>", {"class": "selector-nbyEfM selectable-3iSmAf"})
+                    .append($("<div>")
+                        .addClass("flex-lFgbSz flex-3B1Tl4 horizontal-2BEEBe horizontal-2VE-Fw flex-3B1Tl4 directionRow-yNbSvJ justifyStart-2yIZo0 alignCenter-3VxkQP noWrap-v6g9vO content-249Pr9")
+                        .css("flex", "1 1 auto")
+                        .append(e[1]().toggleClass("emoji icon-3XfMwL"))
+                        .append($("<div>", {"class": "marginLeft8-34JoM2", text: e[0]})))
+                    .appendTo(row);
                 if (i+firstIndex === selectedIndex) {
-                    li.addClass("active");
+                    selector.addClass("selectorSelected-2M0IGv");
                 }
-                li.on("mouseenter.kawaii-complete", e => {
+                row.on("mouseenter.kawaii-complete", e => {
                     cached.selectedIndex = i+firstIndex;
-                    li.siblings(".active").removeClass("active");
-                    li.addClass("active");
+                    row.siblings().children(".selectorSelected-2M0IGv").removeClass("selectorSelected-2M0IGv");
+                    row.children().addClass("selectorSelected-2M0IGv");
                 }).on("mousedown.kawaii-complete", e => {
                     cached.selectedIndex = i+firstIndex;
                     insertSelectedCompletion();
                     // Prevent loss of focus
                     e.preventDefault();
                 });
-                return li;
-            }))
-            .appendTo(autocompleteInner);
+                return row;
+            }));
 
         oldAutocomplete.remove();
 
@@ -167,7 +176,7 @@ Completion.start = function (emoteSets) {
     }
 
     function destroyCompletions() {
-        const channelTextarea = $(textarea).closest(".channel-textarea");
+        const channelTextarea = $(textarea).closest(".channelTextArea-1HTP3C > .inner-3if5cm");
         const oldAutocomplete = channelTextarea.children(".kawaii-autocomplete");
         oldAutocomplete.remove();
         cached = {};
@@ -201,7 +210,7 @@ Completion.start = function (emoteSets) {
 
         // If an emote match is impossible, don't override default behavior.
         // This allows other completion types (like usernames or channels) to work as usual.
-        if (!shouldComplete(candidateText)) {
+        if (!shouldIntercept(candidateText)) {
             destroyCompletions();
             return;
         }
@@ -304,10 +313,10 @@ Completion.start = function (emoteSets) {
         "keydown.kawaii-complete": browseCompletions,
         "wheel.kawaii-complete": scrollCompletions,
         "blur.kawaii-complete": destroyCompletions,
-    }, ".channel-textarea textarea");
+    }, ".channelTextArea-1HTP3C textarea");
 };
 
 // Tear down event handlers and clean up
 Completion.stop = function () {
-    $(".app").off(".kawaii-complete", ".channel-textarea textarea");
+    $(".app").off(".kawaii-complete", ".channelTextArea-1HTP3C textarea");
 };
