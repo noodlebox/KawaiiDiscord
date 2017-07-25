@@ -2,6 +2,7 @@ import $ from "jquery";
 import _ from "lodash";
 
 import EmoteSet from "./emoteset";
+import { monkeyPatch, WebpackModules} from "./internals";
 
 // Regex breakdown:
 // $1 - /(^|\s)/ - Starting from the beginning of the string, or following any whitespace
@@ -67,6 +68,8 @@ const shouldIntercept = shouldInterceptRegex.test.bind(shouldInterceptRegex);
 const Completion = {};
 
 export default Completion;
+
+let cancel = null;
 
 // Set up event handlers
 Completion.start = function (emoteSets) {
@@ -314,9 +317,31 @@ Completion.start = function (emoteSets) {
         "wheel.kawaii-complete": scrollCompletions,
         "blur.kawaii-complete": destroyCompletions,
     }, ".channelTextArea-1HTP3C textarea");
+
+    // Monkey patch default autocompletion to prevent triggering on emoji names
+
+    const module = WebpackModules.find(m => m.prototype && m.prototype.maybeShowAutocomplete);
+    if (!module) {
+        console.warn("unable to monkey patch maybeShowAutocomplete method");
+        return;
+    }
+    cancel = monkeyPatch(module.prototype, "maybeShowAutocomplete", {
+        instead: data => {
+            const text = data.thisObject.props.value;
+            const { selectionEnd } = data.thisObject._ref;
+            if (shouldIntercept(text.slice(0, selectionEnd))) {
+                return;
+            }
+            return data.callOriginalMethod();
+        },
+    });
 };
 
 // Tear down event handlers and clean up
 Completion.stop = function () {
     $(".app").off(".kawaii-complete", ".channelTextArea-1HTP3C textarea");
+    if (cancel) {
+        cancel();
+        cancel = null;
+    }
 };
