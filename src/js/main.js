@@ -296,7 +296,7 @@ function processMutation(mutation, observer) {
         ".markup",
         ".message-content",
         ".topic-expandable",
-        ".markdown-modal.selectable",
+        ".content-3KEfmo.selectable",
     ].join(",");
     const messages = mutationFind(mutation, selector)
         .not(":has(.message-content)");
