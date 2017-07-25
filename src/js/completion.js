@@ -7,10 +7,10 @@ import EmoteSet from "./emoteset";
 // $1 - /(^|\s)/ - Starting from the beginning of the string, or following any whitespace
 //    - /(?!.{0,2}$)/ - not shorter than 3 characters
 // $2 - /(:?)/ - the initial colon in standard emotes
-// $3 - /(([*])?(\w+)([*#])?)/ - emote text ($5), optionally preceded ($4) or followed ($6) by wildcards
-const completeAnyRegex = /(^|\s)(?!.{0,2}$)(:?)(([*])?(\w+)([*#])?)$/;
-const completeStandardRegex = /(^|\s)(?!.{0,2}$):(([*])?(\w+)([*#])?)$/;
-const completeTwitchRegex = /(^|\s)(?!.{0,2}$)(([*])?(\w+)([*#])?)$/;
+// $3 - /(([*])?([\w~]+)([*#])?)/ - emote text ($5), optionally preceded ($4) or followed ($6) by wildcards
+const completeAnyRegex = /(^|\s)(?!.{0,2}$)(:?)(([*])?([\w~]+)([*#])?)$/;
+const completeStandardRegex = /(^|\s)(?!.{0,2}$):(([*])?([\w~]+)([*#])?)$/;
+const completeTwitchRegex = /(^|\s)(?!.{0,2}$)(([*])?([\w~]+)([*#])?)$/;
 
 const emoteComparator = (function () {
     const compare = new Intl.Collator(undefined, {
