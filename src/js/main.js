@@ -18,7 +18,7 @@ function getInternalProps(e) {
     }
 
     try {
-        return getOwnerInstance(e).props;
+        return getOwnerInstance(e, {include: ["Message"]}).memoizedProps;
     } catch (err) {
         return undefined;
     }
