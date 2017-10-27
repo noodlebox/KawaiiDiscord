@@ -99,13 +99,16 @@ Completion.start = function (emoteSets) {
         const autocomplete = $("<div>")
             .addClass("autocomplete-1TnWNR autocomplete-1LLKUa kawaii-autocomplete")
             .on("wheel.kawaii-complete", e => scrollCompletions(e, {locked: true}));
+        const autocompleteInner = $("<div>")
+            .addClass("autocompleteInner-N7OQf1")
+            .appendTo(autocomplete);
         // FIXME: clean up this mess of jQuery
         $("<div>", {"class": "autocompleteRowVertical-3_UxVA autocompleteRow-31UJBI"})
             .append($("<div>", {"class": "selector-nbyEfM"})
                 .append($("<div>", {text: "Emotes matching "}).append($("<strong>", {text: matchText}))
                     .addClass("contentTitle-sL6DrN primary400-1OkqpL weightBold-2qbcng")))
-            .appendTo(autocomplete);
-        autocomplete
+            .appendTo(autocompleteInner);
+        autocompleteInner
             .append(matchList.map((e,i) => {
                 let row = $("<div>", {"class": "autocompleteRowVertical-3_UxVA autocompleteRow-31UJBI"});
                 let selector = $("<div>", {"class": "selector-nbyEfM selectable-3iSmAf"})
