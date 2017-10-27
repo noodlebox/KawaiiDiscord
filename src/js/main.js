@@ -249,7 +249,7 @@ $.fn.fancyTooltip = function () {
         $(this).addClass("kawaii-fancytooltip").removeAttr("title");
         $(this).on("mouseover.fancyTooltip", function () {
             // Create and insert tooltip
-            var tooltip = $("<div>").append(title).addClass("tooltip tooltip-top tooltip-brand");
+            var tooltip = $("<div>").append(title).addClass("tooltip tooltip-top tooltip-black");
             $(".tooltips").append(tooltip);
 
             // Position the tooltip
