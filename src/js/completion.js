@@ -313,7 +313,7 @@ Completion.start = function (emoteSets) {
     }
 
     // Check for matches
-    $(".app").on({
+    $("#app-mount").on({
         "keyup.kawaii-complete keypress.kawaii-complete click.kawaii-complete": checkCompletions,
         "keydown.kawaii-complete": browseCompletions,
         "wheel.kawaii-complete": scrollCompletions,
@@ -341,7 +341,7 @@ Completion.start = function (emoteSets) {
 
 // Tear down event handlers and clean up
 Completion.stop = function () {
-    $(".app").off(".kawaii-complete", ".channelTextArea-1HTP3C textarea");
+    $("#app-mount").off(".kawaii-complete", ".channelTextArea-1HTP3C textarea");
     if (cancel) {
         cancel();
         cancel = null;

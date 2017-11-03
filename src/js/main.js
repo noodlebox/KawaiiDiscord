@@ -273,12 +273,9 @@ $.fn.fancyTooltip = function () {
 
 // Attach observer to start triggering mutations
 function startObserver(observer) {
-    // Get main app area and popouts
+    // Get everything except tooltips
     const selector = [
-        ".theme-dark",
-        ".theme-light",
-        ".theme-dark+span",
-        ".theme-light+span",
+        "#app-mount>:not(.tooltips)",
     ].join(",");
     for (let target of document.querySelectorAll(selector)) {
         observer.observe(target, { childList:true, subtree:true, characterData:true });
@@ -325,25 +322,33 @@ function processMutation(mutation, observer) {
     startObserver(observer);
 }
 
-// Watch for new chat messages
-const chat_observer = new MutationObserver(function (mutations, observer) {
+function aggregateMutations(mutations) {
     // Aggregate mutations
-    const totalMutation = {
-        target: [],
-        addedNodes: [],
-        removedNodes: [],
-    };
+    const target = [], addedNodes = [], removedNodes = [];
     for (let mutation of mutations) {
-        totalMutation.target.push(mutation.target);
+        target.push(mutation.target);
         for (let node of mutation.addedNodes) {
-            totalMutation.addedNodes.push(node);
+            addedNodes.push(node);
         }
         for (let node of mutation.removedNodes) {
-            totalMutation.removedNodes.push(node);
+            removedNodes.push(node);
         }
     }
+    return {target, addedNodes, removedNodes};
+}
 
-    processMutation(totalMutation, observer);
+// Watch for new chat messages
+const chat_observer = new MutationObserver(function (mutations, observer) {
+    processMutation(aggregateMutations(mutations), observer);
+});
+
+// Watch for top-level changes (language change, connection issues)
+const root_observer = new MutationObserver(function (mutations, observer) {
+    const {addedNodes} = aggregateMutations(mutations);
+    if (addedNodes.length) {
+        // Reparse the page and reconnect the observer
+        parseEmoteSet();
+    }
 });
 
 function parseEmoteSet() {
@@ -378,6 +383,7 @@ KawaiiDiscord.prototype.start = function () {
     Completion.start([smutbaseEmotes, partyParrotEmotes, twitchEmotes, twitchSubEmotes]);
 
     startObserver(chat_observer);
+    root_observer.observe(document.querySelector("#app-mount"), { childList:true });
 
     updateIntervalID = setInterval(loadEmoteSets, 2*60*60*1000);
 };
@@ -385,6 +391,7 @@ KawaiiDiscord.prototype.start = function () {
 KawaiiDiscord.prototype.stop = function () {
     clearInterval(updateIntervalID);
 
+    root_observer.disconnect();
     stopObserver(chat_observer);
 
     Completion.stop();
