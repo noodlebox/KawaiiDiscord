@@ -227,7 +227,7 @@ $.fn.parseEmotes = function (emoteSets) {
     this.parseEmotesStandard(standardSets).parseEmotesTwitch(twitchSets);
 
     // Properly jumboify emotes/emoji in messages with no other text
-    this.not(".topic-expandable").has(".emoji").each(function () {
+    this.not(".topic-1KFf6J.expandable-1er6r1").has(".emoji").each(function () {
         // Get the "edited" text, if any, regardless of how it's styled or localized
         var edited = $(this).find(".edited").text();
         // Get the remaining message text
@@ -295,7 +295,7 @@ function processMutation(mutation, observer) {
     const selector = [
         ".markup",
         ".message-content",
-        ".topic-expandable",
+        ".topic-1KFf6J.expandable-1er6r1",
         ".content-3KEfmo.selectable",
     ].join(",");
     const messages = mutationFind(mutation, selector)
