@@ -273,12 +273,9 @@ $.fn.fancyTooltip = function () {
 
 // Attach observer to start triggering mutations
 function startObserver(observer) {
-    // Get main app area and popouts
+    // Get everything except tooltips
     const selector = [
-        ".theme-dark",
-        ".theme-light",
-        ".theme-dark+span",
-        ".theme-light+span",
+        "#app-mount>:not(.tooltips)",
     ].join(",");
     for (let target of document.querySelectorAll(selector)) {
         observer.observe(target, { childList:true, subtree:true, characterData:true });
