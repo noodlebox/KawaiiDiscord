@@ -380,7 +380,8 @@ var updateIntervalID;
 KawaiiDiscord.prototype.start = function () {
     loadEmoteSets();
 
-    Completion.start([smutbaseEmotes, partyParrotEmotes, twitchEmotes, twitchSubEmotes]);
+    // FIXME: handle lazy loading of webpack modules properly
+    window.setTimeout(()=>Completion.start([smutbaseEmotes, partyParrotEmotes, twitchEmotes, twitchSubEmotes]), 1000);
 
     startObserver(chat_observer);
     root_observer.observe(document.querySelector("#app-mount"), { childList:true });
