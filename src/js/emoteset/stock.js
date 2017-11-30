@@ -64,7 +64,7 @@ export const discordEmoji = new EmoteSet({
                     return res.map(e => [e.name, emojiScore(e)]);
                 };
 
-                resolve({emoteMap, search});
+                resolve({emoteMap, search, loaded: 0, skipped: 0});
             }, 1000);
         });
     },
