@@ -358,6 +358,7 @@ function parseEmoteSet() {
 import {twitchEmotes, twitchSubEmotes} from "./emoteset/twitch";
 import {smutbaseEmotes} from "./emoteset/smutbase";
 import {partyParrotEmotes} from "./emoteset/partyparrot";
+import {discordEmoji} from "./emoteset/stock";
 
 function loadEmoteSets() {
     // Load the emote sets if necessary, and parse the document as they load
@@ -366,6 +367,7 @@ function loadEmoteSets() {
     //twitchSubEmotes.load().then(parseEmoteSet);
     smutbaseEmotes.load().then(parseEmoteSet);
     partyParrotEmotes.load().then(parseEmoteSet);
+    discordEmoji.load();
 }
 
 export default function KawaiiDiscord() {}
@@ -381,7 +383,7 @@ KawaiiDiscord.prototype.start = function () {
     loadEmoteSets();
 
     // FIXME: handle lazy loading of webpack modules properly
-    window.setTimeout(()=>Completion.start([smutbaseEmotes, partyParrotEmotes, twitchEmotes, twitchSubEmotes]), 1000);
+    window.setTimeout(()=>Completion.start([smutbaseEmotes, partyParrotEmotes, twitchEmotes, twitchSubEmotes, discordEmoji]), 1000);
 
     startObserver(chat_observer);
     root_observer.observe(document.querySelector("#app-mount"), { childList:true });
