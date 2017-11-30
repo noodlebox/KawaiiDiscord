@@ -200,7 +200,11 @@ Completion.start = function (emoteSets) {
         textarea.focus();
         // Set beginning of selection at start of partial emote text; end of selection end remains where it is
         textarea.selectionStart = matchStart;
-        document.execCommand("insertText", false, completions[selectedIndex][0] + " ");
+        if (!document.execCommand("insertText", false, completions[selectedIndex][0] + " ")) {
+            textarea.setRangeText(completions[selectedIndex][0] + " ");
+            textarea.selectionStart = textarea.selectionEnd;
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        }
 
         destroyCompletions();
     }
