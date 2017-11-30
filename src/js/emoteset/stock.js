@@ -40,7 +40,7 @@ export const discordEmoji = new EmoteSet({
                 const search = query => {
                     const score = name => {
                         const d = name.length - query.length;
-                        const i = name.indexOf(query);
+                        const i = name.toLowerCase().indexOf(query.toLowerCase());
                         if (i < 0) {
                             return Infinity;
                         }
