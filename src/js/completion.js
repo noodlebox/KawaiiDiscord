@@ -313,7 +313,15 @@ Completion.start = function (emoteSets) {
     function scrollCompletions(e, options) {
         /* jshint validthis: true */
         const delta = Math.sign(e.originalEvent.deltaY);
-        scrollWindow(delta, options);
+
+        if (delta !== 0 && prepareCompletions()) {
+            // Prevent Discord's default behavior
+            e.stopPropagation();
+            // Prevent cursor movement
+            e.preventDefault();
+
+            scrollWindow(delta, options);
+        }
     }
 
     // Check for matches
