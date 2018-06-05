@@ -18,7 +18,7 @@ function getInternalProps(e) {
     }
 
     try {
-        return getOwnerInstance(e, {include: ["Message"]}).memoizedProps;
+        return getOwnerInstance(e, {include: ["FluxContainer(t)"]}).memoizedProps;
     } catch (err) {
         return undefined;
     }
