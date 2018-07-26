@@ -290,7 +290,7 @@ function stopObserver(observer) {
 function processMutation(mutation, observer) {
     // Get the set of messages and/or topic area affected by this mutation
     const selector = [
-        ".markup",
+        ".markup-2BOw-j",
         ".message-content",
         ".topic-2QX7LI.expandable-26ClD4",
         ".content-8biNdB.selectable",
