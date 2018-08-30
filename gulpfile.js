@@ -42,7 +42,7 @@ gulp.task("userscript", ["browserify"], function () {
         .pipe(rename("KawaiiDiscord.user.js"))
         .pipe(footer(bootstrap, {safeName}))
         .pipe(header(generateUserscriptHeader(pkg.userscript, {pkg})))
-        .pipe(gulp.dest(""));
+        .pipe(gulp.dest("./dist"));
 });
 
 gulp.task("bdplugin", ["browserify"], function () {
@@ -51,7 +51,7 @@ gulp.task("bdplugin", ["browserify"], function () {
     return gulp.src("./build/KawaiiDiscord.bundle.js")
         .pipe(rename("KawaiiDiscord.plugin.js"))
         .pipe(header(bdPluginHeader, {pkg, safeName}))
-        .pipe(gulp.dest(""));
+        .pipe(gulp.dest("./dist"));
 });
 
 gulp.task("default", ["userscript", "bdplugin"]);
