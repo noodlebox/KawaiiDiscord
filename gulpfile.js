@@ -58,6 +58,8 @@ gulp.task("build_extension", ["browserify"], function () {
         .pipe(gulp.dest("./build/extension/"));
     gulp.src("./src/js/cspwhitelist.js")
         .pipe(gulp.dest("./build/extension/"));
+    gulp.src("./src/js/inject.js")
+        .pipe(gulp.dest("./build/extension/"));
 
     const bootstrap = "(function (plugin) { var p = new plugin(); p.load(); p.start(); })(<%= safeName %>);";
 
