@@ -1,7 +1,7 @@
 {
   "name": "KawaiiDiscord-NG",
-  "version": "0.11.11.2",
-  "version_name": "0.12.0-pre",
+  "version": "0.12.0",
+  "version_name": "0.12.0",
   "description": "Adds huge emote sets to Discord.",
   "permissions": ["webRequest",
                   "webRequestBlocking",
