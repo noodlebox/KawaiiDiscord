@@ -1,0 +1,24 @@
+{
+  "name": "KawaiiDiscord-NG",
+  "version": "0.11.11.2",
+  "version_name": "0.12.0-pre",
+  "description": "Adds huge emote sets to Discord.",
+  "permissions": ["webRequest",
+                  "webRequestBlocking",
+                  "https://discordapp.com/*",
+                  "https://canary.discordapp.com/*"],
+  "background": {
+    "scripts": ["cspwhitelist.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.discordapp.com/*"],
+      "js": ["inject.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    "KawaiiDiscord.extension.js"
+  ],
+
+  "manifest_version": 2
+}

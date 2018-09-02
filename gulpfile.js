@@ -6,6 +6,7 @@ const gulp = require("gulp"),
       browserify = require("browserify"),
       source = require("vinyl-source-stream"),
       buffer = require("vinyl-buffer"),
+      zip = require("gulp-zip"),
       _ = require("lodash"),
       generateUserscriptHeader = require("generate-userscript-header");
 
@@ -34,15 +35,13 @@ gulp.task("browserify", function () {
 });
 
 gulp.task("userscript", ["browserify"], function () {
-    const bootstrap = [
-        "(function (plugin) { var p = new plugin(); p.load(); p.start(); })(<%= safeName %>);",
-    ].join("");
+    const bootstrap = "(function (plugin) { var p = new plugin(); p.load(); p.start(); })(<%= safeName %>);";
 
     return gulp.src("./build/KawaiiDiscord.bundle.js")
         .pipe(rename("KawaiiDiscord.user.js"))
         .pipe(footer(bootstrap, {safeName}))
         .pipe(header(generateUserscriptHeader(pkg.userscript, {pkg})))
-        .pipe(gulp.dest(""));
+        .pipe(gulp.dest("./dist"));
 });
 
 gulp.task("bdplugin", ["browserify"], function () {
@@ -51,7 +50,29 @@ gulp.task("bdplugin", ["browserify"], function () {
     return gulp.src("./build/KawaiiDiscord.bundle.js")
         .pipe(rename("KawaiiDiscord.plugin.js"))
         .pipe(header(bdPluginHeader, {pkg, safeName}))
-        .pipe(gulp.dest(""));
+        .pipe(gulp.dest("./dist"));
 });
 
-gulp.task("default", ["userscript", "bdplugin"]);
+gulp.task("build_extension", ["browserify"], function () {
+    gulp.src("./manifest.json")
+        .pipe(gulp.dest("./build/extension/"));
+    gulp.src("./src/js/cspwhitelist.js")
+        .pipe(gulp.dest("./build/extension/"));
+    gulp.src("./src/js/inject.js")
+        .pipe(gulp.dest("./build/extension/"));
+
+    const bootstrap = "(function (plugin) { var p = new plugin(); p.load(); p.start(); })(<%= safeName %>);";
+
+    return gulp.src("./build/KawaiiDiscord.bundle.js")
+        .pipe(rename("KawaiiDiscord.extension.js"))
+        .pipe(footer(bootstrap, {safeName}))
+        .pipe(gulp.dest("./build/extension/"));
+});
+
+gulp.task("extension", ["build_extension"], function () {
+    return gulp.src("./build/extension/*")
+        .pipe(zip("KawaiiDiscord-ng.zip"))
+        .pipe(gulp.dest("./dist"))
+});
+
+gulp.task("default", ["userscript", "bdplugin", "extension"]);
