@@ -229,7 +229,7 @@ $.fn.parseEmotes = function (emoteSets) {
     // Properly jumboify emotes/emoji in messages with no other text
     this.not(".topic-2QX7LI.expandable-26ClD4").has(".emoji").each(function () {
         // Get the "edited" text, if any, regardless of how it's styled or localized
-        var edited = $(this).find(".edited").text();
+        var edited = $(this).find(".edited-DL9ECl").text();
         // Get the remaining message text
         var text = this.textContent.replace(edited, "").trim();
         if (text.length === 0) {
