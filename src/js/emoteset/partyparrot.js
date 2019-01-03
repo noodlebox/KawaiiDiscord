@@ -1,4 +1,5 @@
 import $ from "jquery";
+import _ from "lodash";
 
 // Emote data
 import EmoteSet from "./emoteset";
