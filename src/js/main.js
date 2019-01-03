@@ -18,7 +18,7 @@ function getInternalProps(e) {
     }
 
     try {
-        return getOwnerInstance(e, {include: ["FluxContainer(t)"]}).memoizedProps;
+        return getOwnerInstance(e, {include: ["Message"]}).memoizedProps;
     } catch (err) {
         return undefined;
     }
@@ -105,7 +105,7 @@ $.fn.parseEmotesStandard = function (emoteSets) {
         var modified = false;
 
         var seed = 0;
-        var message = $(this).closest(".message").not(".message-sending");
+        var message = $(this).closest(".message-1PNnaP").not(".message-sending");
         // Don't look up the useless id for messages being sent
         if (message.length !== 0) {
             // Get a seed for rolls
@@ -229,7 +229,7 @@ $.fn.parseEmotes = function (emoteSets) {
     // Properly jumboify emotes/emoji in messages with no other text
     this.not(".topic-2QX7LI.expandable-26ClD4").has(".emoji").each(function () {
         // Get the "edited" text, if any, regardless of how it's styled or localized
-        var edited = $(this).find(".edited").text();
+        var edited = $(this).find(".edited-DL9ECl").text();
         // Get the remaining message text
         var text = this.textContent.replace(edited, "").trim();
         if (text.length === 0) {
