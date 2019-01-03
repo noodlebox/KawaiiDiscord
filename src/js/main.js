@@ -18,7 +18,7 @@ function getInternalProps(e) {
     }
 
     try {
-        return getOwnerInstance(e, {include: ["FluxContainer(t)"]}).memoizedProps;
+        return getOwnerInstance(e, {include: ["Message"]}).memoizedProps;
     } catch (err) {
         return undefined;
     }
@@ -105,7 +105,7 @@ $.fn.parseEmotesStandard = function (emoteSets) {
         var modified = false;
 
         var seed = 0;
-        var message = $(this).closest(".message").not(".message-sending");
+        var message = $(this).closest(".message-1PNnaP").not(".message-sending");
         // Don't look up the useless id for messages being sent
         if (message.length !== 0) {
             // Get a seed for rolls
