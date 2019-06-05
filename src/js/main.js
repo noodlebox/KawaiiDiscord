@@ -249,8 +249,9 @@ $.fn.fancyTooltip = function () {
         $(this).addClass("kawaii-fancytooltip").removeAttr("title");
         $(this).on("mouseover.fancyTooltip", function () {
             // Create and insert tooltip
-            var tooltip = $("<div>").append(title).addClass("tooltip tooltip-top tooltip-black");
-            $(".tooltips").append(tooltip);
+            // FIXME: This jQuery code has gotten awful
+            var tooltip = $("<div>").append($("<div>").append($("<div>").addClass("tooltipPointer-3ZfirK")).append(title).addClass("tooltip-2QfLtc tooltipTop-XDDSxx tooltipBlack-PPG47z")).addClass("layer-v9HyYc");
+            $(".layerContainer-yqaFcK").append(tooltip);
 
             // Position the tooltip
             var tooltipRect = tooltip[0].getBoundingClientRect();
