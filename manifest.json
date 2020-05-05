@@ -1,18 +1,18 @@
 {
   "name": "KawaiiDiscord-NG",
-  "version": "0.12.3",
-  "version_name": "0.12.3",
+  "version": "0.12.4",
+  "version_name": "0.12.4",
   "description": "Adds huge emote sets to Discord.",
   "permissions": ["webRequest",
                   "webRequestBlocking",
-                  "https://discordapp.com/*",
-                  "https://canary.discordapp.com/*"],
+                  "https://discord.com/*",
+                  "https://canary.discord.com/*"],
   "background": {
     "scripts": ["cspwhitelist.js"]
   },
   "content_scripts": [
     {
-      "matches": ["https://*.discordapp.com/*"],
+      "matches": ["https://*.discord.com/*"],
       "js": ["inject.js"]
     }
   ],
