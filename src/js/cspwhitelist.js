@@ -15,8 +15,8 @@ chrome.webRequest.onHeadersReceived.addListener(
   // filters
   {
     urls: [
-      "https://discordapp.com/*",
-      "https://canary.discordapp.com/*"
+      "https://discord.com/*",
+      "https://canary.discord.com/*"
     ],
     types: ["main_frame"]
   },
